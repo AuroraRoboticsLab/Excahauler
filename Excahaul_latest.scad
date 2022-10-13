@@ -690,22 +690,64 @@ module linearActuatorEnd(h) {
     }
 }
 
-/********* Plow on the front of the robot ************/
-plowPushForward=300; // length of bar from front axle to plow
+/********* Narrow ore storage scoop on the front of the robot ********/
+scoopSize=[740-2*frameSteel,140,280];
+scoopAngle=90; // angle of opened front (easier load & unload)
+scoopPivot=[0,75,50];
+
+module scoopSolid(shrink=0)
+{
+    dy=scoopSize[1]/2;
+    translate(scoopPivot) // put rotational axis at right spot
+    for (angle=[0,1]) // -scoopAngle/2,scoopAngle/2]) 
+        rotate([angle*scoopAngle,0,0])
+            translate([0,angle?dy:-dy,scoopSize[2]/2])
+                cube(scoopSize-[2*shrink,0,0],center=true);
+}
+
+module scoopTrim() 
+{
+    trim=sqrt(2)*scoopSize[2]+10.0;
+    translate(scoopPivot) rotate([45,0,0])
+        cube([scoopSize[0],trim,trim],center=true);
+}
+
+module scoopVolume() {
+    intersection() {
+        scoopSolid();
+        scoopTrim();
+    }
+}
+
+module scoopBox() 
+{
+    wall=1.0;
+    intersection() {
+        scoopTrim();
+        difference() {
+            scoopSolid();
+            translate([0,-wall,+wall]) scoopSolid(shrink=wall);
+        }
+    }
+}
+
+
+/********* Wide plow on the front of the robot ************/
+plowPushForward=250; // length of bar from front axle to plow pivot
 plowPushBack=0; // start relative to axle
 plowPushUpright=120; // linear actuator push arm
 
-// location of plow pivot point, in scoop coords
-plowScoopPivot=[0,-12,75];
+// location of plow pivot point, in box coords
+plowBoxPivot=[0,-12,75];
 
 // Centerline of plow pusher
 plowPushX=axleX-wiper-frameSteel/2;
 plowTiltX=-plowPushX+frameSteel;
 
-// Total size of scoop:
+// Total size of main box:
 plowSize=[1300,170,140];
 
-// Pivot point of scoop, in robot coords
+// Pivot point of box, in robot coords
 plowFramePivot=[0,digAxle,axleZ];
 
 module plowSolid(shrink) {
@@ -750,9 +792,9 @@ module plowFrame() {
     }
 }
 
-// Steel frame for scoop curl motion
+// Steel frame for curl motion
 module curlBox() {
-    translate([plowTiltX,plowScoopPivot[1],0])
+    translate([plowTiltX,plowBoxPivot[1],0])
         linear_extrude(convexity=4,height=plowSize[2])
         difference() {
             square([frameSteel,frameSteel],center=true);
@@ -760,8 +802,8 @@ module curlBox() {
         }
 }
 
-// Steel scoop part of plow
-module plowScoop() {
+// Steel box part of plow
+module plowBox() {
     wall=frameWall;
     shrinkSz=plowSize-[wall,wall,wall];
     difference() {
@@ -787,9 +829,12 @@ module plow(raise=0.0,curl=0.0)
         {
             plowFrame();
             translate([0,plowPushForward,0])
-            rotate([+50-curl*100,0,0])
-            translate(-plowScoopPivot)
-                plowScoop();
+            rotate([-145+curl*120,0,0])
+            translate(-plowBoxPivot)
+            {
+                //plowBox();
+                scoopBox();
+            }
         }
     
 }
@@ -1354,7 +1399,7 @@ module couplerXform(couplerExtend)
         children();
 }
 
-// Used on tools: forms a coupler pickup scoop
+// Used on tools: forms a coupler pickup 
 //   Inside=1, outside=0
 module couplerPickup(inside)
 {
@@ -1977,7 +2022,7 @@ configPickupOre=[0.65,0.05,1,0]; // pick up ore bucket from ground
 configDumpOre=[0.6,0.9,0.25,-0.6]; // dumping ore bucket into water extractor
 configPlow=[0.84,0.25,0.38,0]; // plow with ore bucket, for roadbuilding
 //configWaterDrop=[0.05,0.2,0.38,0]; // putting down heavy thing right in front
-configWaterDrop=[0.4,0.19,0.725,0]; // putting down heavy thing on scoop
+configWaterDrop=[0.4,0.19,0.725,0]; // putting down heavy thing on plow
 
 configDeployOverhang=[0.0,0.1,1.0,0]; // deployment position, hanging off side, electronics up
 configDeployDown=[1.0,0.05,0.65,0]; // deployment position, mounted on the wall, electronics down
@@ -1998,7 +2043,7 @@ configCrunch=[0,0.15,1.0,0]; // scrunched up
 configPhotoOp=[0.6,0.7,0.45,0]; // overview photo
 
 
-module robot(config,plowDown=1,cameraArm=0) {
+module robot(config,plowUp=1,cameraArm=0) {
     translate([0,0,-axleZ+wheelDia/2]) {
         frameModel();
         
@@ -2011,15 +2056,18 @@ module robot(config,plowDown=1,cameraArm=0) {
         wheelAxles();
         
         // Plow motion study
-        //for (plowTilt=[0.0:1.0:1.0])
-        //    for (plowCurl=[0.0:0.25:1.0])
-        //        plow(plowTilt,plowCurl);
-        if (plowDown==1) {
-            plow(0.415,0.35);// level with ground
-        } else if (plowDown==-1) {
-            plow(0.6,0.9);// pin to ground
+        if (0)
+        for (plowTilt=[1.0]) // :1.0:1.0])
+            for (plowCurl=[0.0:0.25:1.0])
+                plow(plowTilt,plowCurl);
+        if (0) {}
+        else if (plowUp==-1) {
+            plow(0,0); // dumping position
+            //plow(0.6,0.6);// scooping position
+        } else if (plowUp==+1) {
+            plow(1,1);// fully upright, hauling position
         } else {
-            plow(1,0);// upright
+            plow(0.40,0.58);// loading position
         }
         
         // Camera arm
@@ -2100,38 +2148,48 @@ module Excahaul_hauling() {
 }
 
 
+/*
 // Ore bucket ready to receive ore:
 translate([0,1100,320]) 
 rotate([-180,0,0])
 oreBucket3D();
+*/
 
+if (0)
 color([0.3,0.5,0.7]) // permafrost
-translate([0,2000,0]) cube([1000,1000,800]);
+translate([1500,2000,0]) cube([1000,1000,800]);
 
 if (!$subpart) 
 {
 // Outputs directly from this file: uncomment only one
     //fem();
     
-    difference() {
+    //difference() 
+    {
         //robot();
         //robot(configPhotoOp,1,1);
         
-        //robot(configDigShovel,1) ripperBucket3D();
-        robot(configRipHoe,1) ripperBucket3D();
-        //robot(configRipShovel,-1) ripperBucket3D();
-        //robot(configRipClose,1) ripperBucket3D();
+        //robot(configDigShovel,0) ripperBucket3D();
+        translate([2000,0,0]) 
+            robot(configRipHoe,0) ripperBucket3D();
+        //robot(configRipShovel,0) ripperBucket3D();
+        //robot(configRipClose,0) ripperBucket3D();
         
-        //robot(configCarryOre,0) oreBucket3D(); 
-        //robot(configPickupOre,1) oreBucket3D(); 
-        //robot(configPlow,1) oreBucket3D(); 
-        //robot(configDumpOre,1) oreBucket3D(); 
+        robot(configCarryOre,1);
         
-        //robot(configReachOut,1) rockBreaker(); // reaching out
-        //robot(configBreakOut,1) rockBreaker(); // reaching out
+        translate([-2000,0,0])
+            robot(configCarryOre,-1);
         
-        //robot(configCarryBig,0) waterTankCoupled(); // watertank carry position
-        //robot(configWaterDrop,1) waterTankCoupled(); // watertank dropoff position
+        //robot(configCarryOre,1) oreBucket3D(); 
+        //robot(configPickupOre,0) oreBucket3D(); 
+        //robot(configPlow,0) oreBucket3D(); 
+        //robot(configDumpOre,-1) oreBucket3D(); 
+        
+        //robot(configReachOut,0) rockBreaker(); // reaching out
+        //robot(configBreakOut,0) rockBreaker(); // reaching out
+        
+        //robot(configCarryBig,1) waterTankCoupled(); // watertank carry position
+        //robot(configWaterDrop,0) waterTankCoupled(); // watertank dropoff position
         
         // Body positions
         //robot(configPickUp); // tool pick-up
@@ -2142,7 +2200,7 @@ if (!$subpart)
         
         
         // Cutaway
-        //translate([-1000,0,0]) cube([2000,5000,5000],center=true);
+        //translate([1000,0,0]) cube([2000,5000,5000],center=true);
     }
     //eBoxSolid(eBoxMLI);
     

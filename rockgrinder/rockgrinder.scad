@@ -406,8 +406,8 @@ module printable_gear_container(shrink,shell,gearLow,gearHigh)
         if (shrink>0 && shrink<2) { // cut little features to index casting
             tower=2.5;
             cylinder(d=tower,h=100);
-            bevel=1;
-            for (flip=[-1,1]) translate([0,0,flip<0?top-shrink:0]) scale([1,1,flip])
+            bevel=2;
+            for (flip=[-1]) translate([0,0,flip<0?top-shrink:0]) scale([1,1,flip])
                 cylinder(d1=tower+2*bevel,d2=tower,h=bevel);
         }
         // core out the central tower
@@ -419,11 +419,14 @@ module printable_gear_container(shrink,shell,gearLow,gearHigh)
             intersection() {
                 union() {
                     for (angle=[0,90]) rotate([0,0,angle])
-                        cube([12,1,20],center=true);
+                        cube([15,1,25],center=true);
                 }
                 scale([1,1,-1]) union() {
-                    cylinder(d=12,h=gap); // base
-                    cylinder(d=gear_shaftOD-0.3,h=20);
+                    cylinder(d=15,h=gap); // base
+                    d=gear_shaftOD-0.4;
+                    h=gap+2; // flat area to bear against gear
+                    cylinder(d=d,h=h);
+                    translate([0,0,h-0.01]) cylinder(d1=d,d2=d-2,h=3);
                 }
             }
         }
