@@ -690,32 +690,62 @@ module linearActuatorEnd(h) {
     }
 }
 
-/********* Narrow ore storage scoop on the front of the robot *******
+/********* Narrow ore storage scoop / bucket on the front of the robot *******
 Target: 50 kg payload, minimally heaped
 Design points: 
 700 x 280 x 280mm triangle -> 32 liter capacity
+300x300 -> 37 liter
+350x350 -> 50.8 liter
 
+Things to watch:
+    - Scoop pivots 120 deg.  Frame pivots about 45 deg.  Total should be nearly 180 deg to allow fully emptying bucket.
+    - Leave room for 38mm wide x 150mm strain gauges on lower supports
+    - Watch interference with top frame
 */
-scoopSize=[740-4*frameSteel,280,280];
-scoopPivot=[0,75,-20];
+strainGaugeSize=[38,150,25]; // exterior dimensions of strain gauge (180kg version)
+
+scoopSize=[740-30-4*frameSteel,350,350];
+scoopPivot=[0,100,-20];
+scoopTrimAngle=30; // cut out front at this angle (from vertical when loading; from horizontal while hauling)
 
 module scoopSolid(shrink=0)
 {
+    s2=[2*shrink,2*shrink,2*shrink];
     dy=scoopSize[1]/2;
+    dz=scoopSize[2]/2;
+
     translate(scoopPivot) // put rotational axis at right spot
-        translate([0,-scoopSize[1]/2,scoopSize[2]/2])
-            cube(scoopSize-[2*shrink,2*shrink,2*shrink],center=true);
+    {
+        
+        intersection() {
+            translate([0,-dy,dz])
+                cube(scoopSize-s2,center=true);
+            
+            hull() {
+                baseSquare=120;
+                topTrim=100;
+                // Wide base below
+                translate([0,0,dz])
+                   cube([scoopSize[0],2*baseSquare,scoopSize[2]]-s2,center=true);
+                // Narrower top
+                translate([0,-scoopSize[1],dz])
+                    cube([scoopSize[0]-topTrim,10,scoopSize[2]]-s2,center=true);
+                    
+            }
+        }
+    }
 }
 
 // Cut out front side of scoop
 module scoopTrim() 
 {
     translate(scoopPivot)
-    translate([0,0,scoopSize[2]]) rotate([35,0,0])
+    translate([0,0,scoopSize[2]]) rotate([30,0,0])
     translate([0,0,-1000])
         cube([scoopSize[0]+1,2000,2000],center=true);
 }
 
+// For computing the interior volume of the scoop:
 module scoopVolume() {
     intersection() {
         scoopSolid();
@@ -723,9 +753,22 @@ module scoopVolume() {
     }
 }
 
+// Graphical version of box:
 module scoopBox() 
 {
     wall=1.0;
+    
+    // pivot box (leaves inward space)
+    symmetryX()
+    translate([scoopSize[0]/2+frameSteel/2,0,0]) 
+    {
+        shrink=0;
+        steelExtrude([[0,0,0],[0,0,150]],0) steelCube(shrink,frameSteel);
+        
+        translate([frameSteel,0,0]) // spacer
+            steelCube(shrink,frameSteel);
+    }
+    
     intersection() {
         scoopTrim();
         difference() {
@@ -776,7 +819,7 @@ module plowSolid(shrink) {
     plowCross=[
         [-plowPushX,crossY,crossZ],[+plowPushX,crossY,crossZ]
     ];
-    steelExtrude(plowCross,0) steelCube(shrink,frameSteel*3/4);
+    steelExtrude(plowCross,0) steelCube(shrink,frameSteel);
     
     // Tilt/curl upright
     plowUpright=[
@@ -784,6 +827,11 @@ module plowSolid(shrink) {
     ];
     rotate([45,0,0])
     steelExtrude(plowUpright) steelCube(shrink,frameSteel);
+    
+    symmetryX()
+        translate([-plowPushX-frameSteel/2,plowPushForward,0])
+            rotate([180,0,0]) scale([1,1,-1])
+            cube(strainGaugeSize);
     
 }
 
@@ -825,6 +873,7 @@ module plowBox() {
     symmetryX() curlBox();
 }
 
+// Set front plow geometry
 module plow(raise=0.0,curl=0.0) 
 {
     color([0.5+0.1*raise,0.5,0.5]) 
@@ -833,7 +882,7 @@ module plow(raise=0.0,curl=0.0)
         {
             plowFrame();
             translate([0,plowPushForward,0])
-            rotate([-145+curl*120,0,0])
+            rotate([-137+curl*120,0,0])
             translate(-plowBoxPivot)
             {
                 //plowBox();
@@ -2057,11 +2106,11 @@ module robot(config,plowUp=1,cameraArm=0) {
         translate([0,eBoxBackY-2,100]) 
             rotate([-90,0,0]) couplerPickupFull();
         
-        wheelAxles();
+        //wheelAxles();
         
         // Plow motion study
         if (0)
-        for (plowTilt=[1.0]) // :1.0:1.0])
+        for (plowTilt=[0,1]) // :1.0:1.0])
             for (plowCurl=[0.0:0.25:1.0])
                 plow(plowTilt,plowCurl);
         if (0) {}
@@ -2071,7 +2120,7 @@ module robot(config,plowUp=1,cameraArm=0) {
         } else if (plowUp==+1) {
             plow(1,1);// fully upright, hauling position
         } else {
-            plow(0.40,0.58);// loading position
+            plow(0.40,0.50);// loading position
         }
         
         // Camera arm
@@ -2179,7 +2228,7 @@ if (!$subpart)
         //robot(configRipShovel,0) ripperBucket3D();
         //robot(configRipClose,0) ripperBucket3D();
         
-        robot(configCarryOre,1);
+        robot(configPickupOre,1);
         
         translate([-2000,0,0])
             robot(configCarryOre,-1);
