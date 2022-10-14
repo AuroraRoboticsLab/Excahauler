@@ -17,7 +17,7 @@ $fs=3.0; $fa=30; // coarse mode
 
 use <coupler_2pin/coupler_2pin_latest.scad>;
 
-$subpart=0; // 0: this is the whole robot; 1: included from elsewhere.
+//$subpart=0; // 0: this is the whole robot; 1: included from elsewhere.
 
 // FEM mode: simpler geometry, smaller mesh segments
 $FEM_mode=0; // 0: graphics only; 1: finite element sim
@@ -690,26 +690,30 @@ module linearActuatorEnd(h) {
     }
 }
 
-/********* Narrow ore storage scoop on the front of the robot ********/
-scoopSize=[740-2*frameSteel,140,280];
-scoopAngle=90; // angle of opened front (easier load & unload)
-scoopPivot=[0,75,50];
+/********* Narrow ore storage scoop on the front of the robot *******
+Target: 50 kg payload, minimally heaped
+Design points: 
+700 x 280 x 280mm triangle -> 32 liter capacity
+
+*/
+scoopSize=[740-4*frameSteel,280,280];
+scoopPivot=[0,75,-20];
 
 module scoopSolid(shrink=0)
 {
     dy=scoopSize[1]/2;
     translate(scoopPivot) // put rotational axis at right spot
-    for (angle=[0,1]) // -scoopAngle/2,scoopAngle/2]) 
-        rotate([angle*scoopAngle,0,0])
-            translate([0,angle?dy:-dy,scoopSize[2]/2])
-                cube(scoopSize-[2*shrink,0,0],center=true);
+        translate([0,-scoopSize[1]/2,scoopSize[2]/2])
+            cube(scoopSize-[2*shrink,2*shrink,2*shrink],center=true);
 }
 
+// Cut out front side of scoop
 module scoopTrim() 
 {
-    trim=sqrt(2)*scoopSize[2]+10.0;
-    translate(scoopPivot) rotate([45,0,0])
-        cube([scoopSize[0],trim,trim],center=true);
+    translate(scoopPivot)
+    translate([0,0,scoopSize[2]]) rotate([35,0,0])
+    translate([0,0,-1000])
+        cube([scoopSize[0]+1,2000,2000],center=true);
 }
 
 module scoopVolume() {
@@ -726,7 +730,7 @@ module scoopBox()
         scoopTrim();
         difference() {
             scoopSolid();
-            translate([0,-wall,+wall]) scoopSolid(shrink=wall);
+            scoopSolid(shrink=wall);
         }
     }
 }
@@ -738,7 +742,7 @@ plowPushBack=0; // start relative to axle
 plowPushUpright=120; // linear actuator push arm
 
 // location of plow pivot point, in box coords
-plowBoxPivot=[0,-12,75];
+plowBoxPivot=[0,0,0];
 
 // Centerline of plow pusher
 plowPushX=axleX-wiper-frameSteel/2;
