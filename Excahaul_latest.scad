@@ -299,15 +299,21 @@ hubmotorZ=100;
 module wheelSpokes()
 {
     intersection() {
-        wheelOutline(-0.5);
+        translate([0,0,1])
+        cylinder(d=wheelDia-1,h=wheelThick-2,$fn=32); 
         union() {
             for (angle=[0:60:360-1]) rotate([0,0,angle])
             for (lean=[0,1])
+            intersection() {
+                union() {
+                    
                     translate([hubmotorOD/2-10,0,lean?hubmotorZ-10:wheelBevel])
-            rotate([0,lean?30:90,0])
-            for (tilt=[-45,0,+45]) rotate([tilt,0,0])
-                cube([1,1,150]);
-        }  
+                    rotate([0,lean?30:90,0])
+                    for (tilt=[-45,0,+45]) rotate([tilt,0,0])
+                        cube([2,2,100]);
+                }  
+            }
+        }   
     }
 }
 
@@ -2106,7 +2112,7 @@ module robot(config,plowUp=1,cameraArm=0) {
         translate([0,eBoxBackY-2,100]) 
             rotate([-90,0,0]) couplerPickupFull();
         
-        //wheelAxles();
+        wheelAxles();
         
         // Plow motion study
         if (0)
