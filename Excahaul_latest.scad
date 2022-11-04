@@ -711,7 +711,7 @@ Things to watch:
 strainGaugeSize=[38,150,25]; // exterior dimensions of strain gauge (180kg version)
 
 scoopSize=[740-30-4*frameSteel,350,350];
-scoopPivot=[0,100,-20];
+scoopPivot=[0,100,-frameSteel/2];
 scoopTrimAngle=30; // cut out front at this angle (from vertical when loading; from horizontal while hauling)
 
 module scoopSolid(shrink=0)
@@ -729,7 +729,7 @@ module scoopSolid(shrink=0)
             
             hull() {
                 baseSquare=120;
-                topTrim=100;
+                topTrim=120; // narrower top edge
                 // Wide base below
                 translate([0,0,dz])
                    cube([scoopSize[0],2*baseSquare,scoopSize[2]]-s2,center=true);
@@ -759,20 +759,55 @@ module scoopVolume() {
     }
 }
 
-// Graphical version of box:
-module scoopBox() 
+// Steel frame around scoop
+module scoopFrameSolid(shrink)
 {
-    wall=1.0;
-    
     // pivot box (leaves inward space)
     symmetryX()
     translate([scoopSize[0]/2+frameSteel/2,0,0]) 
     {
-        shrink=0;
-        steelExtrude([[0,0,0],[0,0,150]],0) steelCube(shrink,frameSteel);
+        y=scoopPivot[1]+frameSteel/2; // underneath box
+        x=scoopSize[0]/2; // center of box
+        z=scoopSize[2]; // front of box
+        steelFramePoints=[
+            //[frameSteel,0,250], // taper to forward
+            [0,-80,80], // forward (linear actuator bolts on here)
+            [0,0,0], // pivot point
+            [0,y,0], // underneath
+            [x,y,0], // center
+        ];
+        steelExtrude(steelFramePoints,0) steelCube(shrink,frameSteel);
+        
+        // Tapered support beams under box
+        for (dx=[frameSteel+0.1,(frameSteel+x)*2/3]) translate([-dx,0,0])
+        {
+            // Under
+            steelExtrude([[0,y,frameSteel/2],[0,y-frameSteel,z-70]],0) 
+                steelCube(shrink,frameSteel);
+            // Back
+            if (dx>2.0*frameSteel)
+            steelExtrude([[0,y,-frameSteel/2],[0,y-scoopSize[1]+100,0]],0) 
+                steelCube(shrink,frameSteel);
+        }
         
         translate([frameSteel,0,0]) // spacer
             steelCube(shrink,frameSteel);
+    }
+}
+
+// Graphical version of box:
+module scoopBox(solid=0) 
+{
+    wall=1.0;
+    
+    difference() {
+        scoopFrameSolid(0);
+        if (!solid)
+            scoopFrameSolid(wall);
+        // Keep frame out of interior of box
+        scoopSolid();
+        // Holes for pivot
+        rotate([0,90,0]) cylinder(d=8,h=1000,center=true);
     }
     
     intersection() {
