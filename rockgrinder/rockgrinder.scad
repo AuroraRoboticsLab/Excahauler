@@ -122,16 +122,6 @@ faceR=58.5;
 face_plate=2*inch;
 face_plate_thick=1/8*inch;
 
-/* Initial testing: 
-    tipR==90 sticks out quite a ways, and hangs up in hand swing tests.
-    tipR==82 doesn't stick out much, but still cuts well.
-    R==90 with a crossbar: cuts very nicely when swung fast.
-*/
-tooth_tipR=90;
-
-tooth_stepA=360/faceN*1.5; // angular distance between adjacent teeth
-toothN=28; // == 4 teeth per plate
-
 
 // Make children at the bottom left corner of each face plate.
 module face_plates() {
@@ -150,38 +140,6 @@ module face_plates_3D() {
     face_plates() cube([face_plate_thick,face_plate,wheelZ]);
 }
 
-// Translate from wheel origin to the tip of this tooth.
-//    The tooth lies along the -X direction
-module tooth_number(toothI)
-{
-    angle=toothI*tooth_stepA;
-    height=(toothI+0.5)*wheelZ/toothN;
-    rotate([0,0,angle])
-        translate([tooth_tipR,0,height])
-            rotate([0,0,180])
-                children();
-}
-
-// Cross section of one tooth
-module tooth_2D()
-{
-    len=tooth_tipR-faceR*cos(30); // -face_plate_thick-0.4;
-    thick=8;    
-    polygon([
-        [0.25*thick,thick],
-        [0,0],
-        [len,0],
-        [1.0*len,0.5*len]
-    ]);
-}
-
-module teeth_3D() 
-{
-    for (i=[0:toothN-1])
-        tooth_number(i)
-            linear_extrude(height=4,center=true)
-                tooth_2D();
-}
 
 /*
 if (0) { // 3D teeth
@@ -924,7 +882,7 @@ if (0) difference() {
 //printable_motor_planets();
 //printable_drive_planets();
 //castable_gears(cups=1);
-castable_gears(shells=1);
+//castable_gears(shells=1);
 
 //bearing_mount(extra_wiggle=0); // endcap
 //bearing_mount(); // middle
