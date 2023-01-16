@@ -1,11 +1,15 @@
 /*
  Excahauler coupler gearbox, 3D printed version for prototype testing.
-
+ This is a stepped planetary gearbox, which shifts the input and output ring gears eight (!) planets.
+ (Spamming planets gives the 3D printed version lots of holding torque.)
+ 
+ Developed 2021 by Dr. Orion Lawlor, lawlor@alaska.edu (Public Domain)
 */
 $subpart=1; $FEM_active=0;
 include <../Excahaul_latest.scad>
 use <../molon.scad>;
-use <gear_library.scad>;
+use <../AuroraSCAD/gear.scad>;
+
 $fs=0.2; $fa=10; // quick and dirty version
 
 // This is the height of the bearing moving parts area
@@ -70,10 +74,10 @@ bearingTopClear=2.0; // clearance on top and bottom between moving parts
 //  height, pitch, pressure angle, addendum, dedendum
 
 // Posible direct-drive RS550 motor type.
-geartype_550 = [ 2.5, 10.0, 20, 0.32, 0.4 ]; // motor input (must match motor's sun gear)
+geartype_550 = [ 0.8, 10.0, 20, 0.32, 0.4 ]; // motor input (must match motor's sun gear)
 
 // Fixed gears: convert motor to carrier ring
-geartypeFixed=[4.9,0.0,20,0.4,0.4]; // fixed ring
+geartypeFixed=[1.56,0.0,20,0.4,0.4]; // fixed ring
 fixedRingTeeth=80; // fixed ring tooth count (with pitch, sets output diameter)
 planetInTeeth=12;
 nPlanetGears=8; // if multiple of ring tooth count, all identical
@@ -83,12 +87,12 @@ gearInPlanet=gearplane_Pgear(gearplaneIn);
 gearInSun=gearplane_Sgear(gearplaneIn);
 
 // Motor gears: driven directly by Molon gearmotor shaft:
-geartypeMotor=[4.4,0.0,20,0.4,0.4]; // motor drive hollow sun
+geartypeMotor=[1.4,0.0,20,0.4,0.4]; // motor drive hollow sun
 gearMotor=[geartypeMotor,13]; // on motor
 gearHollowSun=[geartypeMotor,gear_nteeth(gearInSun)]; // sun side of motor, matches sun side on input for strength
 
 // Output gears: bolt to output coupler
-geartypeOut=[6.40769,0.0,20,0.4,0.4]; // output ring
+geartypeOut=[2.0396,0.0,20,0.4,0.4]; // output ring
 outputRingTeeth=64; // output ring tooth count (sets gear ratio)
 outputRingShift=[0,0,360/outputRingTeeth/2];
 planetOutTeeth=12; // if same as input, easier to time planets
@@ -527,17 +531,17 @@ if (batch==0) { // batch 0: preview cutaway
     difference() { 
         union() {
             bearingAssembly(1,1,1);
-            driveGear();
             bearingMotorDrive(-1.0);
             
             rotate(outputRingShift) {
                 bearingPlanets();
                 translate([0,0,1]) bearingOutSun();
             }
-            #motorDrive();
         }
         translate([0,0,-1]) cube([100,100,100]);
     }
+    driveGear();
+    #motorDrive();
 }
 
 
