@@ -9,8 +9,8 @@
  It sits about 50mm on top of the mounting plate (for motor to clear back bracket)
  Its mounting bolts sit on a 141mm diameter circle, 8 bolts.
 */
-include <../AuroraSCAD/motor.scad>;
-include <../AuroraSCAD/gear.scad>;
+include <../../AuroraSCAD/motor.scad>;
+include <../../AuroraSCAD/gear.scad>;
 $fs=0.1; $fa=2; //<- fine output
 //$fs=0.2; $fa=5; //<- coarse preview
 

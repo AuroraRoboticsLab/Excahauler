@@ -202,6 +202,11 @@ module couplerBodyFillets() {
         cube([8,125,8],center=true);
 }
 
+// Space inside coupler for thumb
+module couplerBodySlot() {
+    extrudeDXF("bodySlot",wide-2*wall,3);
+}
+
 module couplerBody() {
     difference() {
         union() {
@@ -212,7 +217,7 @@ module couplerBody() {
             // Big flat baseplate
             couplerBaseplate();
         }
-        extrudeDXF("bodySlot",wide-2*wall,3);
+        couplerBodySlot();
         
         couplerBaseplateScrews();
         
@@ -277,7 +282,12 @@ module couplerPrintable()
         translate(-mountCenter) couplerBody();
 }
 
-couplerAssembled();
+if (1) 
+     rotate([0,-90,0])  difference() {
+        couplerBodySolid();
+        //couplerBodySlot();
+    }
+//couplerAssembled();
 //couplerPrintable();
 //translate([30,0,thumb/2]) thumb();
 

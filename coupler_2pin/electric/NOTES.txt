@@ -1,0 +1,25 @@
+
+
+Desired features:
+	- Dust tolerant
+		- Built around existing robust connectors, like Anderson power poles?
+		- Orient connectors vertically, so dust falls out.
+	- Ideally androgynous, to allow:
+		- Tool-to-robot
+		- Robot-to-charger
+		- Tool-to-charger
+		- Robot-to-robot
+	- High power, up to kW at 28VDC to allow 1C charging of a 1kWh robot or tool battery. 
+		- 1 kW / 28 VDC = 35 amps sustained
+		- Use 45A rated Anderson power poles
+
+
+
+
+Electrically, I should have:
+	Alignment pins
+	Heavy amp connection for tools / battery recharge
+		Maybe 75A Andersons?
+	I2C digital comms: gnd, 5v, SDA, SCL
+		Maybe as Andersons, for mech robustness?
+
