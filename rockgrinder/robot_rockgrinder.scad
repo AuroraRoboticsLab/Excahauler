@@ -272,7 +272,7 @@ module rockgrinder3D(showFrame=1,showParts=1)
 configDigRockgrinder=[0.65,0.2,0.6+$t,1.0]; // reach low
 
 //rockgrinder3D(1,1);
-robot(configDigRockgrinder,0) rockgrinder3D(1,1);
+//robot(configDigRockgrinder,0) rockgrinder3D(1,1);
 //rockgrinderStorage();
 //rockgrinderBucket2D();
 

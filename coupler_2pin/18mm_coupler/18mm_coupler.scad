@@ -6,16 +6,14 @@
     - Glue halves together with 100m x 4mm basalt dowel rods
     - Weld retaining thumb assembly
         - Weld crossbar onto rods
-        - Weld sideplates and pivot pin around 3D printed link 0
-        - Weld link 0 - link 1 crossbar to steel pull rod
-    - Drop in thumb and slide down
-    - Attach pin 2 of thumb with thumb blocks
+        - Weld plates onto crossbar
+    - Assemble thumb linkage
+    - Drop in thumb and secure with thumb blocks
     - Verify travel
     - Close out inside with baseplate
     - Bolt to gearbox
  
- 
- Dr. Orion Lawlor, lawlor@alaska.edu, 2022-01-06 (Public Domain)
+ Dr. Orion Lawlor, lawlor@alaska.edu, 2023-01-06 (Public Domain)
 */
 inch=25.4; // file units are mm
 
@@ -25,7 +23,7 @@ pinLen=pinSlot-2; // left-right pin length (minus a little space)
 knuckleOR=knuckleSpace-3; // total pickup thickness around pins
 knuckleTaper=10; // Z thickness of knuckle taper
 
-include <../electric_coupler.scad>;
+include <../electric/electric_coupler.scad>;
 
 // Build parameters:
 eSheet=0.032*inch; // sheet steel under electrical coupler
@@ -42,11 +40,8 @@ miniSideSlotEnd=32; // sticks this far down below lower pin
 /* Top face center of electrical coupler */
 ecoupler_center=ecoupler_top_corner+[0,-ecoupler_sz[1]/2,0];
 
-// Parameters of the baseplate that mounts to the wrist gearbox
-baseplateOD=150;
+include <../../geared_coupler/coupler_interface.scad>;
 baseplateThick=8;
-nBaseplateScrews=8;
-baseplateScrewR=70.5; // <- from geared coupler print
 baseplateMetal=0.065*inch; // thickness of metal under baseplate
 
 // Under our baseplate, this is the gearbox space
@@ -83,7 +78,7 @@ module couplerThumbHole()
 {
     // Central hole for thumb actuator stick, wiring, etc
     couplerBaseplateCoords()
-        cylinder(d=75,h=25,center=true);
+        cylinder(d=baseplateThumbHole,h=25,center=true);
 }
 
 module couplerBaseplate()

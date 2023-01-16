@@ -867,7 +867,7 @@ module illustrate_parts(explode=0)
     translate([0,0,bearing2Z]) bearing_mount();
     translate([0,0,explode*0.9]) translate([0,0,bearingMZ-gearZ-gear_spaceZ]) bearing_mount_ring_gear();
 }
-if (0) difference() {
+if (1) difference() {
     illustrate_parts(); // explode=50);
     if (0) rotate([0,0,45])
         cube([1000,1000,1000]); // cutaway

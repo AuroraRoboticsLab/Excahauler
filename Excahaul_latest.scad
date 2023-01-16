@@ -2137,11 +2137,11 @@ configCrunch=[0,0.15,1.0,0]; // scrunched up
 configPhotoOp=[0.6,0.7,0.45,0]; // overview photo
 
 
-module robot(config,plowUp=1,cameraArm=0) {
+module robot(config,plowUp=1,cameraArm=0,radiatorOpen=0.75) {
     translate([0,0,-axleZ+wheelDia/2]) {
         frameModel();
         
-        radiatorLouver(0.75);
+        radiatorLouver(radiatorOpen);
         eBox();
         // Tow / charge block on back:
         translate([0,eBoxBackY-2,100]) 
