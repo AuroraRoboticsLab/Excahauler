@@ -363,7 +363,7 @@ module ecoupler_demo(cutaway=0) {
         screw_3D(ecoupler_mount);
 }
 
-ecoupler_demo(0);
+//ecoupler_demo(0);
 
 //ecoupler_frame();
 //translate([0,ecoupler_sz[1],0]) einsert_powerpole();

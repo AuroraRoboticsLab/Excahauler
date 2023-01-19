@@ -17,6 +17,7 @@
 */
 inch=25.4; // file units are mm
 
+include <../../AuroraSCAD/bevel.scad>;
 include <../tool_coupler_interface.scad>;
 
 pinLen=pinSlot-2; // left-right pin length (minus a little space)
@@ -43,6 +44,19 @@ ecoupler_center=ecoupler_top_corner+[0,-ecoupler_sz[1]/2,0];
 include <../../geared_coupler/coupler_interface.scad>;
 baseplateThick=8;
 baseplateMetal=0.065*inch; // thickness of metal under baseplate
+
+module baseplateMetal2D() {
+    difference() {
+        circle(d=baseplateOD);
+        circle(d=baseplateThumbHole);
+        
+        da=360/nBaseplateScrews;
+        for (angle=[da/2:da:360-1]) rotate([0,0,angle])
+            translate([baseplateScrewR,0,0])
+                circle(d=1); //<- center point, for drilling
+    }
+}
+
 
 // Under our baseplate, this is the gearbox space
 gearboxOD=182;
@@ -161,26 +175,6 @@ module thumbRod3D(height,shrink=0,hollow=1) {
         thumbExtrusion2D(shrink,hollow);
 }
 
-// Beveled cube
-module bevelcube(size,bevel,center=false,bz=1)
-{
-    translate(center?[0,0,0]:size/2)
-    hull() {
-        cube(size-[2*bevel,2*bevel,0],center=true);
-        cube(size-[2*bevel,0,bz*2*bevel],center=true);
-        cube(size-[0,2*bevel,bz*2*bevel],center=true);
-    }
-}
-
-// Beveled cylinder
-module bevelcylinder(d,h,bevel,center=false)
-{
-    translate(center?[0,0,0]:[0,0,h/2])
-    hull() {
-        cylinder(d=d-2*bevel,h=h,center=true);
-        cylinder(d=d,h=h-2*bevel,center=true);
-    }
-}
 
 // Slot where thumb slides back and forth
 module thumbSlot3D()
@@ -685,7 +679,8 @@ module pickupDemo() {
 //#pickupCuts();
 //pickupBaseplate();
 //pickupSlice2D();
-pickupDemo();
+//pickupDemo();
+baseplateMetal2D();
 
 //thumbAssembly2D();
 
