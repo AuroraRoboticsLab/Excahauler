@@ -11,16 +11,20 @@ include <../electric/electric_coupler.scad>;
 
 wall=3.0; // coupler's general wall thickness
 rib=1.5; // thickness of reinforcing ribs
-thick=20; // thickness in the along-pin direction
+thick=18; // thickness in the along-pin direction
 floor=1.5; // thickness under the pins
 pinspots=[[0,0,0],[0,pinSep,0]];
-pinODwall=pinOD+2*wall;
+pin_wiggle=0.15; // print this much space around pins
+pin_outside=pinOD+2*pin_wiggle;
+pin_inside=0.615*inch-2*pin_wiggle; // inside of pins (1/2" EMT)
+pin_inside_thick=2*thick; // filler stops pins from denting
+pinODwall=pin_outside+2*wall;
 
 bolt=0.195*inch; // 3/16" bolt OD
 bolthead=0.5*inch; // flat spot for bolts
 boltback_ht=32;
 boltspots=[[knuckleSpace,0,thick/2],[knuckleSpace,125,thick/2]]; // base of each bolt
-boltlen=[knuckleSpace+pinOD/2+wall, 29];
+boltlen=[knuckleSpace+pinOD/2+wall+0.5, 29.3];
 
 ecoupler=ecoupler_top_corner+[0,pinSep,0];
 ecoupler_size2D=[25,25];
@@ -35,7 +39,7 @@ module sideplate_bolts_3D(inside=0)
             translate([0,0,-1])
             cylinder(d=OD,h=boltlen[i]+2);
         } else { // beveled support cylinder
-            bevel=wall/2;
+            bevel=wall*0.7;
             hull() {
                 cylinder(d=OD,h=boltlen[i]-bevel);
                 cylinder(d=OD-2*bevel,h=boltlen[i]);
@@ -126,24 +130,49 @@ module sideplate_floor_2D() {
     }
 }
 
+// Basic overall 3D shape
 module sideplate3D() {
     intersection() {
         union() {
+            // Reinforcing ribs
             linear_extrude(height=floor) 
                 sideplate_floor_2D();
+
+            // Walls and reinforcing ribs
             linear_extrude(height=thick,convexity=8)
                 sideplate_ribs_2D();
+            
+            // Bevel walls/ribs on top and bottom sides
+            stepmax=1.9;
+            for (top=[0,1]) for (wallstep=[0.5:0.5:stepmax]) 
+                translate([0,0,top?thick:0]) scale([1,1,top?-1:1])
+                linear_extrude(height=floor+wallstep,convexity=8)
+                sideplate_round() intersection() {
+                    for (side=[0,1]) sideplate_solid_2D(side); 
+                    offset(r=+stepmax-wallstep)
+                        sideplate_ribs_2D();
+                }
+
+            // Top plate
+            translate([0,0,thick-floor])
+                linear_extrude(height=floor) {
+                    ecoupler_box_2D();
+                    difference() {
+                        sideplate_solid_2D(1);
+                        sideplate_solid_2D(0);
+                    }
+                }
         }
         
-        // Trim the leading edge, to guide coupler inside
+        // Bevel the leading edge, to guide coupler inside
         union() {
-            bevel=rib;
+            bevel=2;
             for (side=[0,1])
             hull() {
-                linear_extrude(height=thick-rib) 
+                linear_extrude(height=thick-bevel) 
                     sideplate_solid_2D(side); 
                 linear_extrude(height=thick+0.01) 
-                    offset(r=-rib)
+                    offset(r=-bevel)
                         sideplate_solid_2D(side);
                 // don't bevel the back or bottom edge
                 translate([1000,-1000]) cube([1,1,thick]);
@@ -152,8 +181,7 @@ module sideplate3D() {
     }
 }
 
-pin_inside=0.615*inch; // inside of pins (1/2" EMT)
-pin_inside_thick=2*thick; // filler stops pins from denting
+// Reinforcing inside pin holes, to keep the thin-wall steel tubes from crushing
 module pin_inside3D() {
     difference() {
         cylinder(d=pin_inside,h=pin_inside_thick);
@@ -166,23 +194,31 @@ module pin_inside3D() {
 module sideplate3Dbolted() {
     difference() {
         union() {
-            sideplate3D();
+            difference() {
+                union() {
+                    sideplate3D();
+                    sideplate_bolts_3D(0);
+                }
+                // clear space around pins
+                for (i=[0,1])
+                translate(pinspots[i]+[0,0,floor]) cylinder(d=pin_outside,h=thick);
+            }
+            
+            // fill pin insides
             for (i=[0,1])
                 translate(pinspots[i]) pin_inside3D();
-            
-            difference () {
-                sideplate_bolts_3D(0);
-                for (i=[0,1])
-                translate(pinspots[i]+[0,0,floor]) cylinder(d=pinOD,h=thick);
-            }
         }
+        // bolt holes
         sideplate_bolts_3D(1);
     }
 }
 
-sideplate3Dbolted();
+module sideplate3Dprintable() {
+    rotate([0,0,90]) {
+        sideplate3Dbolted();
 
-translate([55,0,0]) scale([-1,1,1]) sideplate3Dbolted();
+        translate([55,0,0]) scale([-1,1,1]) sideplate3Dbolted();
+    }
+}
 
-
-
+sideplate3Dprintable();
