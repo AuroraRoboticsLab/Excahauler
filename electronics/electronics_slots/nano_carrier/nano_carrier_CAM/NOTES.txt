@@ -1,0 +1,4 @@
+Pass 01: holes, 20 degree cutter, copper side down.  Zero at top left (Y in file are all negative.)
+Pass 02: isolate traces, 0.8mm diameter endmill, copper side up.  Zero at bottom left (re-zero Y.)
+Pass 03: cut outline of board, 3mm diameter endmill (V works well).
+
