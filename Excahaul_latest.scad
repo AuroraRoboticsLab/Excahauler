@@ -2147,6 +2147,9 @@ configDeployDown=[1.0,0.05,0.65,0]; // deployment position, mounted on the wall,
 configDigShovel=[0.7,0.3,0.75,1.0]; // dig down with ripper bucket
 
 configGrind=[0.7,0.4,0.7,0.0]; // mid-grind
+configGrind0=[0.39,0.4,0.65,0.0]; // top of cut
+configGrind2=[0.55,0.25,0.4,0.0]; // bottom of cut
+
 
 configRipHoe=[1.0,0.8,0.75,1.0]; // mid-rip
 configRipShovel=[0.7,0.4,0.5,0.0]; // mid-rip
@@ -2244,10 +2247,17 @@ module steelMass() {
     arms(configCarryBig,0,1,0,0); // steel only
 }
 
-// White flat ground background, for photos
+// White flat ground background, for screenshots
 module whiteBackground() 
 {
-    color([1,1,1]) cube([10000,10000,1],center=true);
+    color([2,2,2]) {
+        // ground
+        cube([10000,10000,1],center=true);
+        
+        // backdrop
+        translate([-5000,0,0])
+            cube([1,10000,10000],center=true);
+    }
 }
 
 // Row of tools
@@ -2283,7 +2293,11 @@ oreBucket3D();
 
 if (0)
 color([0.3,0.5,0.8]) // permafrost
-translate([1500,2000,0]) cube([1000,1000,800]);
+translate([0,1050,0]) difference() {
+    translate([-1000,0,0])
+        cube([1000,1000,800]);
+    rotate([-30,0,0]) translate([0,-1000,0]) cube([4000,2000,4000],center=true);
+}
 
 if (is_undef($subpart)) 
 {
@@ -2303,7 +2317,10 @@ if (is_undef($subpart))
         configAnimate=[configDigShovel[0],
             configDigShovel[1],$t,configDigShovel[3],configDigShovel[4]];
         //robot(configAnimate,0) ripperBucket3D();
-        robot(configGrind,0) rockgrinder3D(1,1);
+        
+        configGrindSweep=(1.0-$t)*configGrind0+$t*configGrind2;
+        robot(configGrind0,0) rockgrinder3D(1,1);
+        
         //robot(configGrind,0) rockgrinder3D(1,1);
         //robot(configRipClose,0) ripperBucket3D();
         
