@@ -30,7 +30,7 @@ solder_thick=1.5;
 pin_thick=0.1*inch+0.5;
 overall=floor+pin_thick+board_thick+floor;
 
-board_height=22;
+board_height=21.5;
 board_width=17;
 
 tube_OD=25.4;

@@ -15,7 +15,6 @@
 // $fs=0.5; $fa=5; // fine mode
 $fs=3.0; $fa=30; // coarse mode
 
-use <coupler_2pin/coupler_2pin_latest.scad>;
 
 //$subpart=0; // 0: this is the whole robot; 1: included from elsewhere.
 
@@ -63,6 +62,8 @@ robotBackY=crossY-frameSteel/2-wheelDia; // only bumper beyond here
 
 
 // Warm electrical box: back portion
+eBoxAsBuilt=1; ///< 1: real tupperware box.  0: flight-style radiator on top.
+
 eBoxTop=400; // Z coordinate of top of electronics & camera box
 eBox=[2*axleX-25,eBoxY,465];
 eBoxCenter=[0,eBoxFrontY-eBox[1]/2,eBox[2]/2]; // coords of center of electronics box
@@ -123,7 +124,7 @@ actuatorColor=[0.3,0.2,0.3];
 boomActuatorX=axleX-wiper-actuatorR;
 stickActuatorX=264; // stickX-wiper-actuatorR; 
     //couplerX+wiper+stickSteel+wiper+actuatorR;
-couplerActuatorX=couplerX; // -wiper-actuatorR;
+tiltActuatorX=couplerX; // -wiper-actuatorR;
 
 // This is where the boom actuator attaches to the frame
 boomFrameActuator=[boomActuatorX-actuatorR-wiper-boomSteel/2,-310,60];
@@ -152,7 +153,7 @@ stickXlo=stickX-stickSteel/2;
 stickXhi=couplerX+wiper+stickSteel/2;
 stickElbow=[stickXlo,0,0];
 stickCrossbar=[stickXlo,130,50];
-stickCouplerActuator=[stickXlo,162,50];
+stickTiltActuator=[stickXlo,stickCrossbar[1]+60,stickCrossbar[2]-70];
 stickBoomActuator=[stickXhi,560,50];
 stickCouplerPivot=[stickXhi,730,0];
 
@@ -165,7 +166,7 @@ couplerBearingHeight=37+couplerThick; // from top of frame to back of pickup
 couplerPivot=[couplerX-couplerSteel/2,-75,-couplerHeight];
 
 // Pivot point where actuator attaches to coupler
-couplerActuator=[couplerActuatorX-actuatorR-wiper-couplerSteel/2,85,-couplerHeight*0.6];
+tiltActuator=[tiltActuatorX-actuatorR-wiper-couplerSteel/2,85,-couplerHeight];
 
 couplerDriveDia=couplerSize-2*couplerThick;
 couplerBevel=couplerSteel; // size of coupler bevels
@@ -397,14 +398,16 @@ module rotate_around_X(angle,convexity)
 // Entire radiator louver assembly
 module radiatorLouver(open=0.5)
 {
-    radiatorTilt()
-    translate(radiatorPivot)
-    translate([0,-radiatorThickY*open*0.9,0])
-    translate(-radiatorPivot)
-    translate([0,0,3]) //<- dust clearance
-    color(eColor)
-    {
-        radiatorTop(0.0,radiatorMLIthick);
+    if (eBoxAsBuilt==0) {
+        radiatorTilt()
+        translate(radiatorPivot)
+        translate([0,-radiatorThickY*open*0.9,0])
+        translate(-radiatorPivot)
+        translate([0,0,3]) //<- dust clearance
+        color(eColor)
+        {
+            radiatorTop(0.0,radiatorMLIthick);
+        }
     }
 }
 
@@ -584,39 +587,42 @@ module aboveGround() {
 // Electrical box
 module eBox() 
 {
-    
-    // Camera rotation mechanism
-    color(eColor) 
-    translate(cameraPivot) 
-        cameraArmDisk();
-        
-    difference() {
-        union() {
+    if (eBoxAsBuilt==1) { // ground test version with tupperware box
+        sz=[480,360,320];
+        translate([0,eboxAxle,sz[2]/2]) bevelcube(sz,center=true);
+    }
+    if (eBoxAsBuilt==0) { // full flight version with radiators and MLI parapet
+        // Camera rotation mechanism
+        color(eColor) 
+        translate(cameraPivot) 
+            cameraArmDisk();
+            
+        difference() {
             eBoxSolid(0);
+            
+            eBoxSolid(eBoxMLI); // interior space (not MLI)
+            
+            //eBoxViewSlot(0.0); // space for cameras to see out
+            
+            symmetryX()
+            for (clearancePoint=[boomFrameActuator]) 
+                    translate(clearancePoint) {
+                        sphere(r=actuatorR*2);
+                    }
+            
+            //translate([1000,0,0]) cube([2000,2000,2000],center=true); // cutaway
         }
         
-        eBoxSolid(eBoxMLI); // interior space (not MLI)
+        /*
+        // Dirt-deflecting "eyebrow" over camera facing mining area
+        symmetryX() translate(eBoxViewSlotStart)
+            translate([0,radiatorBox[1]/2-25,49]) cube([wheelThick,75,2]);
         
-        //eBoxViewSlot(0.0); // space for cameras to see out
+        lightsCameras();
         
-        symmetryX()
-        for (clearancePoint=[boomFrameActuator]) 
-                translate(clearancePoint) {
-                    sphere(r=actuatorR*2);
-                }
-        
-        //translate([1000,0,0]) cube([2000,2000,2000],center=true); // cutaway
+        eBoxGlass();
+        */
     }
-    
-    /*
-    // Dirt-deflecting "eyebrow" over camera facing mining area
-    symmetryX() translate(eBoxViewSlotStart)
-        translate([0,radiatorBox[1]/2-25,49]) cube([wheelThick,75,2]);
-    
-    lightsCameras();
-    
-    eBoxGlass();
-    */
 }
 
 
@@ -962,20 +968,21 @@ module frameSolid(shrink) {
         steelExtrude(rocker) steelCube(shrink,frameSteel);
     }
     
-    // Crossbar holds sides together
-    frameCross=[
-        [+x,crossY,0],
-        [-x,crossY,0]
-    ];
-    steelExtrude(frameCross,0) steelCube(shrink,frameSteel);
+    // Crossbars hold robot sides together
+    for (y=[crossY,robotBackY])
+    {
+        frameCross=[ [+x,y,0], [-x,y,0] ];
+        steelExtrude(frameCross,0) steelCube(shrink,frameSteel);
+    }
     
-    
-    // Reach up and support the boom in fully parked (haul) config
-    support=boomElbow-[frameSteel/2,0,boomSteel/2+frameSteel/2+wiper];
-    frameSupport=[support,
-        [support[0],crossY,0] // reach down to crossbar
-    ];
-    steelExtrude(frameSupport) steelCube(shrink,frameSteel);
+    if (0) {
+        // Reach up and support the boom in fully parked (haul) config
+        support=boomElbow-[frameSteel/2,0,boomSteel/2+frameSteel/2+wiper];
+        frameSupport=[support,
+            [support[0],crossY,0] // reach down to crossbar
+        ];
+        steelExtrude(frameSupport) steelCube(shrink,frameSteel);
+    }
     
     // Leg to support the back of the boom actuator
     boomActuatorSymmetry()
@@ -1206,32 +1213,27 @@ module boomXform(boomExtend)
 
 /********** Stick: second link, provides reach.  Holds linear actuators ******/
 
-stickBoxCenter=[-25,332,0];
-stickBoxSz=[250,425,150];
+stickBoxCenter=[0,460,140];
+stickBoxSz=[320,200,155];
 
-// A bevelcube, but the bottom right corner is missing
-module beveltrimcube(sz,shrink,center)
-{
-    bev=51;
-    trim=125;
-    hull() {
-        translate([0,shrink*25,sz[2]/2-bev/2])
-            bevelcube([sz[0],sz[1]-shrink*25,bev],center);
-        translate([0,trim/2,-sz[2]/2+bev/2])
-            bevelcube([sz[0],sz[1]-trim,bev],center);
-    }
-}
-
-// Warm electronics box with cameras, motor controllers, etc.
+// Secondary warm electronics box for cameras, motor controllers, etc.
 module stickBox()
 {
+    bevel=25;
     translate(stickBoxCenter)
     difference() {
-        beveltrimcube(stickBoxSz,shrink=0,center=true);
+        bevelcube(stickBoxSz,bevel=bevel,center=true);
         s=eBoxMLI;
-        beveltrimcube(stickBoxSz-2*[s,s,s],shrink=1,center=true);
+        bevelcube(stickBoxSz-2*[s,s,s],bevel=bevel,center=true);
     }
 }
+
+// RealSense mounted on top of stick
+use <camera_mount/realsense_mount/realsense_mount.scad>;
+cameraBar=[stickCrossbar[0]-70,370,stickCrossbar[2]+stickSteel];
+armCameraX=(6+7/8)*inch/2;
+armCameraStart=[armCameraX,cameraBar[1]-1/4*inch,cameraBar[2]];
+armCameraEnd=armCameraStart+[0,0,8*inch];
 
 module stickSolid(shrink=0)
 {
@@ -1251,6 +1253,10 @@ module stickSolid(shrink=0)
     symmetryX() list_extrudeY(stickMain)
         steelSquare(shrink,stickSteel,0);
     
+    // Camera mount crossbar
+    steelExtrude([cameraBar,flipX(cameraBar)],0)
+        steelCube(shrink,stickSteel);
+    
     // Bottom crossbar
     inset=[stickSteel/2,0,0];
     steelExtrude([stickCrossbar-inset,flipX(stickCrossbar-inset)],0)
@@ -1260,6 +1266,10 @@ module stickSolid(shrink=0)
     top=stickBoomActuator-inset+[0,-25,0];
     steelExtrude([top,flipX(top)],0)
         steelCube(shrink+1,stickSteel/2);
+        
+    // Reach up for camera mast
+    armCamera=[armCameraStart,armCameraEnd-[0,0,stickSteel/2]];
+    steelExtrude(armCamera) scale([1,0.5,1]) steelCube(shrink,stickSteel);
     
     if (0) {
     // Crossbar gussets
@@ -1269,15 +1279,16 @@ module stickSolid(shrink=0)
     ]) steelCube(diagShrink,stickSteel);
     }
     
-    // Reach out for coupler linear actuator
-    actCoupX=couplerActuatorX+actuatorR+wiper+stickSteel/2;
-    actCoup=[
-        [actCoupX,stickCrossbar[1],stickCrossbar[2]],
-        [actCoupX,stickCouplerActuator[1],stickCouplerActuator[2]]
+    // Reach out for tilt linear actuator
+    tiltCoupX=tiltActuatorX+actuatorR+wiper+stickSteel/2;
+    tiltCoup=[
+        [tiltCoupX,stickCrossbar[1],stickCrossbar[2]],
+        [tiltCoupX,stickCrossbar[1],stickCrossbar[2]-25],
+        [tiltCoupX,stickTiltActuator[1],stickTiltActuator[2]]
     ];
-    couplerActuatorSymmetry()
+    tiltActuatorSymmetry()
     {
-        steelExtrude(actCoup,0) steelCube(shrink+1,stickSteel);
+        steelExtrude(tiltCoup,0) scale([1,1,0.5]) steelCube(shrink+1,stickSteel);
     }
     
     // Reach up for boom linear actuator
@@ -1302,7 +1313,7 @@ module stickSolid(shrink=0)
 }
 
 stickPivotHoles=[stickElbow, // pivot from boom
-    stickCouplerActuator, // the coupler linear 
+    stickTiltActuator, // the coupler linear 
     stickBoomActuator, // the boom linear pushes here
     stickCouplerPivot ];
 module stickHoles(shrink) {
@@ -1319,6 +1330,9 @@ module stickModel(wipers,box=0)
         stickHoles(0.0); // outside of frame
         stickHoles(frameWall); // inside of tubes
     }
+    
+    translate([0,armCameraEnd[1],armCameraEnd[2]])
+        cameraMountWithShroud();
     
     if (box) color(eColor) stickBox();
     
@@ -1372,11 +1386,11 @@ module couplerSolid(shrink=0)
     sz=couplerSize-2*shrink;
     
     // Arm down to tilt actuator
-    couplerActuatorSymmetry()
+    tiltActuatorSymmetry()
     steelExtrude([
-        couplerActuator,
-        [couplerActuator[0],couplerActuator[1],couplerPivot[2]],
-        [couplerActuator[0],couplerPivot[1],couplerPivot[2]]
+        tiltActuator,
+        [tiltActuator[0],tiltActuator[1],couplerPivot[2]],
+        [tiltActuator[0],couplerPivot[1],couplerPivot[2]]
     ]) steelCube(shrink,couplerSteel);
     
     // Crossbar between pivot points
@@ -1392,7 +1406,7 @@ module couplerSolid(shrink=0)
         
         // Steel plate behind the coupler gearbox
         if (shrink==0)
-            cube([2*couplerActuator[0],175,0.050*inch],center=true);
+            cube([2*tiltActuator[0],175,0.050*inch],center=true);
         
         scale([1,1,-1]) // model for drive motor
             cylinder(d=50-2*shrink,h=75-shrink);
@@ -1402,7 +1416,7 @@ module couplerHoles(shrink)
 {
     difference() {
         couplerSolid(shrink);
-        pivotHoles([couplerPivot,couplerActuator],shrink);
+        pivotHoles([couplerPivot,tiltActuator],shrink);
     }
 }
 
@@ -1417,6 +1431,7 @@ module couplerLockingPin(clearance=1)
 couplerMotorPosition=[0,38.2,-couplerBearingHeight]; 
 couplerMotorRotation=[0,0,90];
 use <molon.scad>;
+use <coupler_2pin/18mm_coupler/18mm_coupler.scad>;
 
 // Coupler model, with Z facing toward attachment
 module couplerModel(wipers)
@@ -1453,21 +1468,14 @@ module couplerCharge(expand=0)
 // Coupler pickup horn
 module couplerHorn()
 {
-    translate([0,0,-32])
-    rotate([0,0,180])
+    color([0.3,0.3,0.3])
+    translate([0,0,-40])
+    rotate([180,0,0])
     {
         difference() {
             // From coupler_2pin/ directory:
             couplerBaseplateCoordsInv()
-            difference()
-            {
                 couplerBodySolid(); 
-                color([0.5,0.5,0.5]) couplerChargeHorn(0.5);
-            }
-            
-            // Lightening void inside
-            translate([0,8,0])
-                cube([68,112,45],center=true);
         }
     }
     
@@ -1476,9 +1484,9 @@ module couplerHorn()
 }
 
 // Symmetry for coupler linear actuator(s)
-module couplerActuatorSymmetry()
+module tiltActuatorSymmetry()
 {
-    //symmetryX() //<- two copies
+    symmetryX() //<- two copies
     scale([-1,1,1]) // <- one copy on right side
         children();
 }
@@ -1968,7 +1976,7 @@ boomActType=actuatorType_20inch;
 stickActBegin=[-stickActuatorX,boomStickActuator[1],boomStickActuator[2]];
 stickActType=actuatorType_12inch;
 
-couplerActBegin=[-couplerActuatorX,stickCouplerActuator[1],stickCouplerActuator[2]];
+couplerActBegin=[-tiltActuatorX,stickTiltActuator[1],stickTiltActuator[2]];
 couplerActType=actuatorType_12inch;
 
 module drawLinearActuator(config,
@@ -2040,10 +2048,10 @@ module arms(config,actuators=1,models=1,pins=1,wipers=1,travel=0)
             boomLink,stickActBegin,
             stickLink,[-stickActuatorX,stickBoomActuator[1],stickBoomActuator[2]]);
         
-        couplerActuatorSymmetry()
+        tiltActuatorSymmetry()
         drawLinearActuator(config,
             stickLink,couplerActBegin,
-            couplerLink,[-couplerActuatorX,couplerActuator[1],couplerActuator[2]]);
+            couplerLink,[-tiltActuatorX,tiltActuator[1],tiltActuator[2]]);
     }
 }
 
@@ -2121,7 +2129,8 @@ configWaterDrop=[0.4,0.19,0.725,0]; // putting down heavy thing on plow
 configDeployOverhang=[0.0,0.1,1.0,0]; // deployment position, hanging off side, electronics up
 configDeployDown=[1.0,0.05,0.65,0]; // deployment position, mounted on the wall, electronics down
 
-configDigShovel=[1.0,0.5,0.75,1.0]; // dig down with ripper bucket
+//configDigShovel=[1.0,0.5,0.75,1.0]; // dig down with ripper bucket
+configDigShovel=[0.7,0.3,0.75,1.0]; // dig down with ripper bucket
 
 
 configRipHoe=[1.0,0.8,0.75,1.0]; // mid-rip
@@ -2144,8 +2153,9 @@ module robot(config,plowUp=1,cameraArm=0,radiatorOpen=0.75) {
         radiatorLouver(radiatorOpen);
         eBox();
         // Tow / charge block on back:
-        translate([0,eBoxBackY-2,100]) 
-            rotate([-90,0,0]) couplerPickupFull();
+        if (eBoxAsBuilt==0)
+            translate([0,eBoxBackY-2,100]) 
+                rotate([-90,0,0]) couplerPickupFull();
         
         wheelAxles();
         
@@ -2253,26 +2263,34 @@ if (0)
 color([0.3,0.5,0.7]) // permafrost
 translate([1500,2000,0]) cube([1000,1000,800]);
 
-if (!$subpart) 
+if (is_undef($subpart)) 
 {
 // Outputs directly from this file: uncomment only one
     //fem();
+    
+    /*translate([245,0,0])
+    rotate([0,0,14.7]) cube([25,600,25]);*/
     
     //difference() 
     {
         //robot();
         //robot(configPhotoOp,1,1);
         
-        //robot(configDigShovel,0) ripperBucket3D();
-        translate([2000,0,0]) 
-            robot(configRipHoe,0) ripperBucket3D();
-        //robot(configRipShovel,0) ripperBucket3D();
+        configAnimate=[configDigShovel[0],
+            configDigShovel[1],$t,configDigShovel[3],configDigShovel[4]];
+        //robot(configAnimate,0) ripperBucket3D();
+        robot(configRipShovel,0) ripperBucket3D();
         //robot(configRipClose,0) ripperBucket3D();
         
-        robot(configPickupOre,1);
+        if (0) { // illustrates dig-haul cycle
+            translate([2000,0,0]) 
+                robot(configRipHoe,0) ripperBucket3D();
         
-        translate([-2000,0,0])
-            robot(configCarryOre,-1);
+            robot(configPickupOre,1);
+        
+            translate([-2000,0,0])
+                robot(configCarryOre,-1);
+        }
         
         //robot(configCarryOre,1) oreBucket3D(); 
         //robot(configPickupOre,0) oreBucket3D(); 

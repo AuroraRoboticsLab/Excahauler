@@ -67,6 +67,11 @@ module couplerBaseplateCoords()
     translate(baseplateCenter)
         children();
 }
+module couplerBaseplateCoordsInv()
+{
+    translate(-baseplateCenter)
+        children();
+}
 module couplerBaseplateScrewCenters()
 {
     da=360/nBaseplateScrews;
@@ -558,6 +563,13 @@ module pickupBodyHooks() {
         
     }
 }
+
+
+// Used from outside: graphical illustration of pickup tool
+module couplerBodySolid() {
+    pickupBodyHooks();
+}
+
 
 // Cut in rebar rods, to hold halves together
 module pickupRebarRods() {

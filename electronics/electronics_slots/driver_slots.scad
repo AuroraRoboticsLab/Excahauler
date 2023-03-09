@@ -68,14 +68,18 @@ module slot_back2D() {
             scale([1,3.5,1])
                 circle(d=driver_case_thick*2/3);
     }
-    
+}
+
+// Wire tie arc between slots
+module slot_wiretie2D()
+{
     // Wiring arc on top
     r=driver_case_thick/2; // radius of hole for wires
-    translate([driver_case_thick/2,driver_case_vertical])
+    translate([driver_case_thick+slotspace/2,driver_case_vertical+0.2*r])
     rotate([0,0,45])
     difference() {
         circle(r=r,$fn=8);
-        circle(r=r-6,$fn=8);
+        circle(r=r-5,$fn=8);
     }
 }
 
@@ -174,6 +178,9 @@ module slots_back2D() {
         {
             slot_back2D();
             
+            if (s<nslots-1)
+                slot_wiretie2D();
+            
             h=driver_case_vertical/8;
             w=(s<nslots-1)?slot2slot:driver_case_thick;
             for (y=[0, driver_case_vertical/2-h/2, driver_case_vertical-h])
@@ -254,5 +261,5 @@ module slots3D() {
     }
 }
 
-
+scale([-1,1,1]) // <- mirror "L" version
 slots3D();

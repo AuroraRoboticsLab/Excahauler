@@ -140,7 +140,7 @@ module backProngs(prongside,withH=1,withV=0) {
 }
 
 // Upright sidewalls
-module sideRibs(offsetR)
+module sideRibs(offsetR,simple)
 {
     backExtrude(h=ribHt,round=8) 
     offset(r=offsetR)
@@ -152,18 +152,21 @@ module sideRibs(offsetR)
             backStrap(prongside,cameraside);
             backProngs(prongside,0,0.5);
             
-            // diagonal to support the sides
-            scale([prongside,1,1]) 
-            hull() {
-                translate([IR,-10]) circle(d=rib);
-                translate([IR+prongOD[0]+rib/2,+16]) circle(d=rib);
+            if (simple==0)
+            {       
+                // diagonal to support the sides
+                scale([prongside,1,1]) 
+                hull() {
+                    translate([IR,-10]) circle(d=rib);
+                    translate([IR+prongOD[0]+rib/2,+16]) circle(d=rib);
+                }
             }
         }
     }
     
 }
 
-module cameraPlus() {
+module cameraPlus(simple=0) {
     cameraHousingSolid(cameraWall);
     
     prongBoltCenter() cylinder(d1=prongOD[0],d2=12,h=4);
@@ -178,16 +181,17 @@ module cameraPlus() {
         translate([0,+rib,0]) backCamera();
         for (prongside=[-1,+1]) {
             for (cameraside=[-1,+1]) backStrap(prongside,cameraside);
-            backProngs(prongside);
+            if (simple==0) backProngs(prongside);
         }
     }
     
     // Upright side ribs
     difference() {
-        sideRibs(0); // full width
+        sideRibs(0,simple); // full width
         
         // Narrower sections to save plastic in middle
         round=5;
+        if (simple==0)
         rotate([-90,0,0]) rotate([0,-90,0])
         linear_extrude(height=300,center=true,convexity=4) 
         offset(r=+round) offset(r=-round)
@@ -199,16 +203,17 @@ module cameraPlus() {
     }
     
     // Thinner side ribs act as support material in middle
-    sideRibs(-rib*0.2); //<- thinner in middle
+    if (simple==0)
+        sideRibs(-rib*0.2,simple); //<- thinner in middle
     
     // Diagonals
     sideDiagonals();
 }
 
 // Full 3D printable part
-module cameraHousing() {
+module cameraHousing(simple=0) {
     difference() {
-        cameraPlus();
+        cameraPlus(simple);
         cameraMinus();
     }
 }
@@ -252,7 +257,7 @@ cameraShroudAttach=(cameraDepth+flatBack)/2; // length of shroud behind camera
 // This is the camera's field of view (plus a little wiggle room)
 module cameraShroudSolid(fatten=0) {
     hull() {
-        linear_extrude(height=1) offset(r=cameraShroudFlare+fatten) scale([1.20,1,1]) {        //cameraShroud2D();
+        linear_extrude(height=1) offset(r=cameraShroudFlare+fatten) scale([1.30,1,1]) {        //cameraShroud2D();
             square([cameraWide+cameraOD+2*cameraWall,cameraOD+2*cameraWall],center=true);
         }
         translate([0,0,cameraShroudLen])
@@ -282,10 +287,11 @@ module cameraShroud() {
     }
 }
 
+cameraShroudTrimRot=[20,0,0];
+cameraShroudTrimCenter=[0,-cameraShroudFlare-cameraOD/2-cameraWall,0];
 module cameraShroudTrim() {
     difference() {
-        rotate([20,0,0])
-            translate([0,-cameraShroudFlare-cameraOD/2-cameraWall,0])
+        rotate(cameraShroudTrimRot) translate(cameraShroudTrimCenter)
                 cameraShroud();
         
         // trim base flat, so it prints
@@ -293,17 +299,41 @@ module cameraShroudTrim() {
     }
 }
 
+// Imported from main robot, in stick coordinates
+module cameraMountWithShroud() {
+    translate([0,-prongOD[1]/2,2])
+    rotate([-prongAngle,0,0]) 
+    {
+        color([0.3,0.3,0.3]) {
+            cameraHousing(simple=1);
+            
+            // Shroud on top of housing
+            translate([0,cameraDepth+cameraShroudLen,cameraDistance+cameraOD/2])
+            rotate([90,0,0])
+            translate(-cameraShroudTrimCenter) rotate(-cameraShroudTrimRot) 
+                cameraShroudTrim();
+        }
+        color([0.8,0.8,0.8]) { // model of realsense
+            translate([0,1,0])
+            backExtrude(h=cameraDepth-2) offset(r=-cameraWall-2) backCamera();
+        }
+    }
+}
+
+
+cameraMountWithShroud();
 //cameraShroud2D(); // save SVG / DXF for cutting acrylic panel
 
 //cameraShroudTrim(); // 3D printable shroud
+//import("realsense_shroud_v3.stl");
 
 //translate([0,-cameraDistance-cameraOD/2,cameraShroudLen+cameraDepth+flatBack]) rotate([180,0,0]) cameraShroud();
 
 
 // rotate([0,-90,0]) linear_extrude(height=1.5) crossCheck();
 
-rotate([0,0,-90]) rotate([90,0,0]) // printable flat on its back
-cameraHousing(); // operational config
+//rotate([0,0,-90]) rotate([90,0,0]) // printable flat on its back
+//cameraHousing(); // operational config
 
 
 
