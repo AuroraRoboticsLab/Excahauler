@@ -40,6 +40,9 @@ printColor=[0.2,0.2,0.2]; // black PETG or PC parts
 //  Material: PTFE filled with MoS2
 wiper=3;
 
+// If 1, show coordinate system RGB axes
+showAxes=1;
+
 include <Excahaul_wheel.scad>;
 
 // Primary rock grinding tool
@@ -1450,8 +1453,6 @@ use <coupler_2pin/18mm_coupler/18mm_coupler.scad>;
 // Coupler model, with +Y facing toward attachment, +Z up
 module couplerModel(wipers)
 { 
-    axes3D();
-    #cube([10,20,50],center=true);
     difference() {
         couplerHoles(0.0);
         couplerHoles(frameWall);
@@ -2145,7 +2146,7 @@ configDeployDown=[1.0,0.05,0.65,0]; // deployment position, mounted on the wall,
 //configDigShovel=[1.0,0.5,0.75,1.0]; // dig down with ripper bucket
 configDigShovel=[0.7,0.3,0.75,1.0]; // dig down with ripper bucket
 
-configGrind=[0.7,0.4,1.0,0.0]; // mid-grind
+configGrind=[0.7,0.4,0.7,0.0]; // mid-grind
 
 configRipHoe=[1.0,0.8,0.75,1.0]; // mid-rip
 configRipShovel=[0.7,0.4,0.5,0.0]; // mid-rip
@@ -2213,7 +2214,7 @@ module robot(config,plowUp=1,cameraArm=0,radiatorOpen=0.75) {
         // Tool motion studies:
         //workingVolume(4,4,8) cube([20,200,couplerThick/3],center=true); // coupler face
 
-        if (1) // motion study
+        if (0) // motion study
         workingVolume(4,4,6) 
         //workingVolume(8,8,8) 
         //rotate([0,0,180]) // inverted attach (bucket facing down)
@@ -2243,11 +2244,16 @@ module steelMass() {
     arms(configCarryBig,0,1,0,0); // steel only
 }
 
+// White flat ground background, for photos
+module whiteBackground() 
+{
+    color([1,1,1]) cube([10000,10000,1],center=true);
+}
+
 // Row of tools
 module toolsRow()
 {
     translate([0,300,0]) {
-        color([1,1,1]) cube([20000,20000,1],center=true);
         
         translate([0,1300,281]) rotate([0,0,0]) oreBucket3D();
         
@@ -2281,6 +2287,8 @@ translate([1500,2000,0]) cube([1000,1000,800]);
 
 if (is_undef($subpart)) 
 {
+    whiteBackground();
+    
 // Outputs directly from this file: uncomment only one
     //fem();
     
@@ -2295,7 +2303,7 @@ if (is_undef($subpart))
         configAnimate=[configDigShovel[0],
             configDigShovel[1],$t,configDigShovel[3],configDigShovel[4]];
         //robot(configAnimate,0) ripperBucket3D();
-        //robot(configGrind,0) rockgrinder3D(1,1);
+        robot(configGrind,0) rockgrinder3D(1,1);
         //robot(configGrind,0) rockgrinder3D(1,1);
         //robot(configRipClose,0) ripperBucket3D();
         
@@ -2340,7 +2348,7 @@ if (is_undef($subpart))
     
     //translate([0,-800,10]) color([0,0,0]) cube([1200,3,3],center=true);
 
-    toolsRow();
+    //toolsRow();
     
 // Ore bucket in rock hammer & pickup position
 //translate([0,810,280]) rotate([-90,0,0]) oreBucket3D(); // upright (stack)

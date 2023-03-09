@@ -13,6 +13,7 @@ module ammocan()
     x=285;
     y=150;
     z=290;
+    color([0.5,0.5,0.5])
     translate([-x/2,0,0]) cube([x,y,z]);
 }
 
@@ -203,7 +204,8 @@ module rockgrinder3D(showFrame=1,showParts=1)
 {
     OD=190; 
 
-    if (showParts) {
+    if (showParts) 
+    color([0.5,0.5,0.5]) {
         toolPickup();
 
         translate([0,knuckleSpace+30,Zbase-frameSteel/2]) ammocan();

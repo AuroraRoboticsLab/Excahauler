@@ -1,3 +1,3 @@
 $subpart=1;
 include <../Excahaul_latest.scad>;
-scoopBox(1);
+scale(0.001) scoopBox(1);
