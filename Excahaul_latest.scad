@@ -398,16 +398,14 @@ module rotate_around_X(angle,convexity)
 // Entire radiator louver assembly
 module radiatorLouver(open=0.5)
 {
-    if (eBoxAsBuilt==0) {
-        radiatorTilt()
-        translate(radiatorPivot)
-        translate([0,-radiatorThickY*open*0.9,0])
-        translate(-radiatorPivot)
-        translate([0,0,3]) //<- dust clearance
-        color(eColor)
-        {
-            radiatorTop(0.0,radiatorMLIthick);
-        }
+    radiatorTilt()
+    translate(radiatorPivot)
+    translate([0,-radiatorThickY*open*0.9,0])
+    translate(-radiatorPivot)
+    translate([0,0,3]) //<- dust clearance
+    color(eColor)
+    {
+        radiatorTop(0.0,radiatorMLIthick);
     }
 }
 
@@ -2158,7 +2156,9 @@ module robot(config,plowUp=1,cameraArm=0,radiatorOpen=0.75) {
     translate([0,0,-axleZ+wheelDia/2]) {
         frameModel();
         
-        radiatorLouver(radiatorOpen);
+        if (eBoxAsBuilt==0)
+            radiatorLouver(radiatorOpen);
+        
         eBox();
         // Tow / charge block on back:
         if (eBoxAsBuilt==0)
