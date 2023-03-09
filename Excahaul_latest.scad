@@ -845,7 +845,7 @@ plowSize=[1300,170,140];
 // Pivot point of box, in robot coords
 plowFramePivot=[0,digAxle,axleZ];
 
-module plowSolid(shrink) {
+module plowForkSolid(shrink) {
     crossY=50;
     crossZ=22;
     
@@ -883,12 +883,18 @@ module plowSolid(shrink) {
     
 }
 
-// Steel frame that pushes the plow
-module plowFrame() {
+// Steel frame that lifts and pushes the plow.
+//  Pivots off the front axle
+module plowFork() {
     difference() {
-        plowSolid(0.0);
-        plowSolid(frameWall);
-        // holes
+        plowForkSolid(0.0);
+        plowForkSolid(frameWall);
+        
+        // Holes for pivot
+        for (y=[0,plowPushForward])
+            translate([0,y,0])
+                rotate([0,90,0]) cylinder(d=8,h=1000,center=true);
+        
     }
 }
 
@@ -921,16 +927,16 @@ module plowBox() {
     symmetryX() curlBox();
 }
 
-// Set front plow geometry
-module plow(raise=0.0,curl=0.0) 
+// Set front geometry: either scoop (on robot) or plow (old style)
+module plowScoop(fork=0.0,dump=0.0) 
 {
-    color([0.5+0.1*raise,0.5,0.5]) 
+    color([0.5+0.1*fork,0.5,0.5]) 
     translate(plowFramePivot)
-        rotate([-35+raise*50,0,0])
+        rotate([-35+fork*50,0,0])
         {
-            plowFrame();
+            plowFork();
             translate([0,plowPushForward,0])
-            rotate([-137+curl*120,0,0])
+            rotate([-137+dump*120,0,0])
             translate(-plowBoxPivot)
             {
                 //plowBox();
@@ -2163,17 +2169,17 @@ module robot(config,plowUp=1,cameraArm=0,radiatorOpen=0.75) {
         
         // Plow motion study
         if (0)
-        for (plowTilt=[0,1]) // :1.0:1.0])
-            for (plowCurl=[0.0:0.25:1.0])
-                plow(plowTilt,plowCurl);
+        for (plowFork=[0,1]) // :1.0:1.0])
+            for (plowDump=[0.0:0.25:1.0])
+                plowScoop(plowFork,plowDump);
         if (0) {}
         else if (plowUp==-1) {
-            plow(0,0); // dumping position
+            plowScoop(0,0); // dumping position
             //plow(0.6,0.6);// scooping position
         } else if (plowUp==+1) {
-            plow(1,1);// fully upright, hauling position
+            plowScoop(1,1);// fully upright, hauling position
         } else {
-            plow(0.40,0.50);// loading position
+            plowScoop(0.40,0.50);// loading position
         }
         
         // Camera arm
