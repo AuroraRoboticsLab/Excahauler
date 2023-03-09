@@ -2,7 +2,13 @@
 
 OpenSCAD source code for building a large autonomous mining robot.  Uses a combination of welded and 3D printed parts.
 
-This is a photo from the front of the robot, showing our first rough physical prototype.
+To build this source code, download OpenSCAD 2020 or newer, and:
+```
+    git clone https://github.com/AuroraRoboticsLab/AuroraSCAD
+    openscad Excahaul_latest.scad
+```
+
+The subdirectories contain a variety of subassemblies which are primarily 3D printed. This is a photo from the front of the robot, showing our first rough physical prototype.
 ![Photo of robot holding tool.](documentation/excahauler_front.jpg?raw=true "Front view of the robot")
 
 
