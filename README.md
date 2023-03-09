@@ -27,7 +27,7 @@ The robot arm moves via two links.  The arm **boom** connects to the robot frame
 The second robot arm link is the **stick** (following the odd excavator naming convention).  The stick has an Intel RealSense D455 depth camera mounted on top, and small electronics box for motor controllers and interfacing.
 ![Diagram of stick.](documentation/render/stick.jpg?raw=true "Stick")
 
-The next link **tilt**s the tool forward and backward via linear actuators, and **spin**s the tool via a stepped planetary geartrain. 
+The next link holds the tool coupler. It can **tilt** the tool forward and backward via linear actuators, and **spin** the tool via a stepped planetary geartrain. 
 ![Diagram of tilt and spin links.](documentation/render/spin.jpg?raw=true "Tilt front-back (YZ) and spin (around Y)")
 
 The tool coupler lets us pick up tools using a 2-pin approach similar to excavator quick-change.  The origin is centered on the top pin.  The bottom pin can be locked in place with a rather complex linkage wedged inside.
