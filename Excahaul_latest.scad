@@ -1,6 +1,6 @@
 /*
- Excavator-hauler
- Dr. Orion Lawlor, lawlor@alaska.edu (Public Domain)
+ Excavator-hauler robot
+ Dr. Orion Lawlor, lawlor@alaska.edu 2020--2023 (Public Domain)
  
  Coordinate system here is right-handed, in mm:
     +X is right side 
@@ -9,7 +9,7 @@
  
  boom linear: 500mm/20" travel (625-1125 overall)
  stick linear: 300mm/12" travel
- coupler linear: 300mm/12" travel (425-725 overall)
+ tilt linear: 300mm/12" travel (425-725 overall)
 */
 
 // $fs=0.5; $fa=5; // fine mode
@@ -34,13 +34,21 @@ couplerSteel=steel1;
 
 steelColor=[0.9,0.9,0.9];
 wheelColor=[0.35,0.1,0.2];
+printColor=[0.2,0.2,0.2]; // black PETG or PC parts
 
 // wiper with dust channels, sits between moving parts
 //  Material: PTFE filled with MoS2
 wiper=3;
 
-
 include <Excahaul_wheel.scad>;
+
+// Primary rock grinding tool
+include <rockgrinder/rockgrinder_frame.scad>;
+
+// RealSense camera mounted on top of the arm
+use <camera_mount/realsense_mount/realsense_mount.scad>;
+
+
 
 // Frame parameters
 axleX=400; // distance from centerline to outside of frame
@@ -155,18 +163,24 @@ stickElbow=[stickXlo,0,0];
 stickCrossbar=[stickXlo,130,50];
 stickTiltActuator=[stickXlo,stickCrossbar[1]+60,stickCrossbar[2]-70];
 stickBoomActuator=[stickXhi,560,50];
-stickCouplerPivot=[stickXhi,730,0];
+stickCouplerPivot=[stickXhi,700,0];
 
+
+
+cameraBar=[stickCrossbar[0]-70,370,stickCrossbar[2]+stickSteel];
+armCameraX=(6+7/8)*inch/2;
+armCameraStart=[armCameraX,cameraBar[1]-1/4*inch,cameraBar[2]];
+armCameraEnd=armCameraStart+[0,0,8*inch];
 
 
 // Location of stick-to-coupler pivot point in coupler coords:
 couplerHeight=75; // from pivot to front of coupler face
 couplerThick=couplerSteel; // Z thickness of mating tool pickup
-couplerBearingHeight=37+couplerThick; // from top of frame to back of pickup
-couplerPivot=[couplerX-couplerSteel/2,-75,-couplerHeight];
+couplerBearingHeight=45+couplerThick/2; // Y from center of frame to center of pickup
+couplerPivot=[couplerX-couplerSteel/2,-couplerBearingHeight,75]; // pivot point up to top of tool coupler
 
-// Pivot point where actuator attaches to coupler
-tiltActuator=[tiltActuatorX-actuatorR-wiper-couplerSteel/2,85,-couplerHeight];
+// Pivot point where tilt actuator attaches to tool coupler, in coupler coords
+tiltActuator=[tiltActuatorX-actuatorR-wiper-couplerSteel/2,-couplerBearingHeight,-75];
 
 couplerDriveDia=couplerSize-2*couplerThick;
 couplerBevel=couplerSteel; // size of coupler bevels
@@ -184,19 +198,20 @@ function linkEnd(link) = link[6]; /* vec3 final translation */
 
 boomLink=[undef,"Boom",0, 
     boomShoulder, // translate start (relative to parent frame) 
-    [0,0,0],[-125,0,0], // rotate start and range 
+    [-10,0,0],[-125,0,0], // rotate start and range 
     -boomShoulder // translate end 
 ];
 
+
 /*
-// "tilt" is the difference between the two boom segment heights, 
+// "skew" is the difference between the two boom segment heights, 
 //  here horribly faked by rotating around Y just after the boom.
 //  Details not modeled because this probably isn't worth it.
-tiltPoint=[stickX,boomElbow[1],boomElbow[2]];
-tiltLink=[boomLink,"Tilt",4,
-    tiltPoint,
+skewPoint=[stickX,boomElbow[1],boomElbow[2]];
+skewLink=[boomLink,"Skew",4,
+    skewPoint,
     [0,0,0],[0,10,0], // rotate start and range
-    -tiltPoint,
+    -skewPoint,
 ];
 */
 
@@ -206,16 +221,16 @@ stickLink=[boomLink,"Stick",1,
     [0,0,0] // translate end 
 ];
 
-couplerLink=[stickLink,"Coupler",2,
+tiltLink=[stickLink,"Tilt",2,
     [0,stickCouplerPivot[1],stickCouplerPivot[2]], // translate start (relative to parent frame) 
-    [-180,0,0],[140,0,0], // rotate start and range 
+    [-90,0,0],[140,0,0], // rotate start and range 
     [0,-couplerPivot[1],-couplerPivot[2]] // translate end 
 ];
 
-wristLink=[couplerLink,"Wrist",3,
-    [0,0,0],
-    [0,0,0],[0,0,180], // rotate start and range
-    [0,0,0],
+spinLink=[tiltLink,"Spin",3,
+    [0,0,0], // tilt already put us at the right start point to spin
+    [0,0,0],[0,180,0], // rotate start and range
+    [0,0,spin_to_top_pin], // end by moving to top tool pin
 ];
 
 /*
@@ -270,6 +285,15 @@ module line_extrudeY(S,E,convexity=2)
             
         }
     }
+}
+
+// Draw the axes of the current 3D coordinate system, as color 3D boxes (for debug)
+//   Red box is +X, green box is +Y, blue box is +Z
+module axes3D() {
+    l=0.3;
+    color([1,l,l]) cube([100,10,10]);
+    color([l,1,l]) cube([10,100,10]);
+    color([l,l,1]) cube([10,10,100]);
 }
 
 // Extrude 2D shape along a list of points.
@@ -1104,7 +1128,7 @@ module boomSolidSaddle(side,shrink) {
     
     
     // Connection down to stick actuator
-    stickTrussBottom=boomStickActuator-[0,0,60];
+    stickTrussBottom=boomStickActuator-[0,0,25];
     actLeg=[boomPreElbow,boomStickActuator,stickTrussBottom];
     steelExtrude(actLeg) steelCube(shrink+1,boomSteel);
     
@@ -1218,7 +1242,7 @@ module boomXform(boomExtend)
 
 /********** Stick: second link, provides reach.  Holds linear actuators ******/
 
-stickBoxCenter=[0,460,140];
+stickBoxCenter=[0,470,140];
 stickBoxSz=[320,200,155];
 
 // Secondary warm electronics box for cameras, motor controllers, etc.
@@ -1232,13 +1256,6 @@ module stickBox()
         bevelcube(stickBoxSz-2*[s,s,s],bevel=bevel,center=true);
     }
 }
-
-// RealSense mounted on top of stick
-use <camera_mount/realsense_mount/realsense_mount.scad>;
-cameraBar=[stickCrossbar[0]-70,370,stickCrossbar[2]+stickSteel];
-armCameraX=(6+7/8)*inch/2;
-armCameraStart=[armCameraX,cameraBar[1]-1/4*inch,cameraBar[2]];
-armCameraEnd=armCameraStart+[0,0,8*inch];
 
 module stickSolid(shrink=0)
 {
@@ -1336,7 +1353,7 @@ module stickModel(wipers,box=0)
         stickHoles(frameWall); // inside of tubes
     }
     
-    translate([0,armCameraEnd[1],armCameraEnd[2]])
+    translate([0,armCameraEnd[1],armCameraEnd[2]]) color(printColor)
         cameraMountWithShroud();
     
     if (box) color(eColor) stickBox();
@@ -1365,8 +1382,9 @@ module stickXform(stickExtend)
 
 /*********** Coupler: holds actual tools at end of arm *******/
 // Mates up the coupler with a tool.
-//  Coupler is sitting on the -Z side of the origin,
-//  flat along X and Y.
+//   Tool forward is +Y
+//   Tool up is +Z
+//   Tool right is +X
 module couplerMating2D(shrink=0)
 {
     szW=couplerWid-2*shrink;
@@ -1393,6 +1411,7 @@ module couplerSolid(shrink=0)
     // Arm down to tilt actuator
     tiltActuatorSymmetry()
     steelExtrude([
+        tiltActuator+[0,0,-50], // guard for tool coupler (actually tapers)
         tiltActuator,
         [tiltActuator[0],tiltActuator[1],couplerPivot[2]],
         [tiltActuator[0],couplerPivot[1],couplerPivot[2]]
@@ -1404,17 +1423,14 @@ module couplerSolid(shrink=0)
     ],0) steelCube(shrink,couplerSteel);
     
     // Tool rotation "wrist" gearbox
-    translate([0,0,-couplerBearingHeight]) 
+    translate([0,-couplerBearingHeight+couplerSteel/2,0]) 
     {
-        translate([0,0,shrink])
-    cylinder(d=couplerDriveDia-2*shrink,h=couplerBearingHeight-30-2*shrink); 
+        translate([0,0,shrink]) color(printColor) rotate([-90,0,0])
+    cylinder(d=couplerDriveDia-2*shrink,h=couplerBearingHeight-couplerSteel/2-2*shrink); 
         
         // Steel plate behind the coupler gearbox
-        if (shrink==0)
-            cube([2*tiltActuator[0],175,0.050*inch],center=true);
-        
-        scale([1,1,-1]) // model for drive motor
-            cylinder(d=50-2*shrink,h=75-shrink);
+        if (shrink==0) color(steelColor)
+            cube([2*tiltActuator[0],0.050*inch,175],center=true);
     }
 }
 module couplerHoles(shrink) 
@@ -1425,63 +1441,43 @@ module couplerHoles(shrink)
     }
 }
 
-couplerLockingPinOD=0.5*inch;
-module couplerLockingPin(clearance=1)
-{
-    // Center tool locking pin
-    cylinder(d=couplerLockingPinOD+clearance,h=200,center=true);
-}
-
 // Sync these with geared_coupler motorPosition
-couplerMotorPosition=[0,38.2,-couplerBearingHeight]; 
-couplerMotorRotation=[0,0,90];
+couplerMotorPosition=[40,-couplerBearingHeight,0]; 
+couplerMotorRotation=[0,-90,-90];
 use <molon.scad>;
 use <coupler_2pin/18mm_coupler/18mm_coupler.scad>;
 
-// Coupler model, with Z facing toward attachment
+// Coupler model, with +Y facing toward attachment, +Z up
 module couplerModel(wipers)
-{    
+{ 
+    axes3D();
+    #cube([10,20,50],center=true);
     difference() {
         couplerHoles(0.0);
         couplerHoles(frameWall);
-        
-        //couplerLockingPin(1);
     }
     
     // Drive motor
-    if (0) if (!$FEM_mode)
+    if (1) if (!$FEM_mode) color(steelColor)
     translate(couplerMotorPosition) rotate(couplerMotorRotation)
         motor_face_subtract();
         
 }
 
-// Electrical charge contacts, in wacky coupler_2pin horn coords (Z left, Y up, X out)
-module couplerChargeHorn(expand=0)
-{
-    for (side=[-1,+1]) translate([-9,75,side*15])
-        cube([5,25,25]+2*[expand,expand,expand],center=true);    
-}
-
-// Electrical charge contacts, in coupler coords (Z left, Y up, X out) charge contacts
+// Electrical charge contacts, in coupler coords
 module couplerCharge(expand=0)
 {
-    color([1,0.5,0.5]) 
-    for (side=[-1,+1]) translate([side*15,-23,-6])
-        cube([25,25,3]+2*[expand,expand,expand],center=true);    
+    
 }
 
 // Coupler pickup horn
 module couplerHorn()
 {
     color([0.3,0.3,0.3])
-    translate([0,0,-40])
-    rotate([180,0,0])
+    translate([0,0,0])
+    rotate([90,0,0])
     {
-        difference() {
-            // From coupler_2pin/ directory:
-            couplerBaseplateCoordsInv()
-                couplerBodySolid(); 
-        }
+        couplerBodySolid(); 
     }
     
     // Electrical contacts
@@ -1499,7 +1495,7 @@ module tiltActuatorSymmetry()
 // Translate from stick coords to coupler coords
 module couplerXform(couplerExtend)
 {
-    couplerRot=[-170+140*couplerExtend,0,0];
+    couplerRot=[90+140*couplerExtend,0,0];
     translate([0,stickCouplerPivot[1],stickCouplerPivot[2]])
     rotate(couplerRot)
     translate([0,-couplerPivot[1],couplerHeight-couplerPivot[2]])
@@ -1528,6 +1524,8 @@ module couplerPickup(inside)
 // Complete prefab coupler pickup (tool side)
 module couplerPickupFull()
 {
+    toolPickup();
+    /*
     color([0.9,0.5,0.2])
     translate([0,-10.5,0]) //<- line up tool with horn
     {
@@ -1541,6 +1539,7 @@ module couplerPickupFull()
                 rotate([0,90,0])
                     cylinder(d=8,h=couplerWid+8,center=true);
     }
+    */
 }
 
 
@@ -1593,9 +1592,9 @@ module waterTank(shrink=0) {
 // Translate/rotate from tank coords (origin at ground) to coupler coords (origin at coupler) if dir=1, back if dir=-1
 module waterTankXform(dir=+1) {
     rh=[0,0,waterTankR+waterTankH]; // up to top hemisphere
-    rc=[0,600,waterTankStandSteel/2+waterTankR+waterTankMLI]; // radius to coupler
+    rc=[0,600,waterTankStandSteel/2+waterTankR+waterTankMLI+knuckleSpace/2]; // radius to coupler
     locAngle=[90,0,0]; // locator angle on tank
-    tiltAngle=[180,0,0]; // angle of coupler to tank
+    tiltAngle=[-90,0,0]; // angle of coupler to tank
     if (dir==+1) {
         rotate(locAngle) 
         translate(rc) rotate(tiltAngle)
@@ -1638,6 +1637,7 @@ module waterTankStandSolid(shrink) {
     // Pickup attaching to the coupler
     waterTankXform() {
         
+        /*
         translate([0,0,waterTankStandSteel/2+frameWall]) {
             range=couplerHt/2;
             ylo=-range; 
@@ -1657,6 +1657,7 @@ module waterTankStandSolid(shrink) {
                     [x,300,100]
                 ],0) steelCube(shrink,waterTankStandSteel);
         }
+        */
     }
 }
 
@@ -1770,6 +1771,8 @@ module skewZY(skew)
 module ripperBucket3D(pickup=1,wide=ripperBucketWide,wall=ripperBucketWall) 
 {
     color([0.6,0.7,0.8])
+    translate([0,knuckleSpace,-100])
+    rotate([-90,0,0])
     difference() {
         union() {
             translate([0,0,2]) shovel2Dto3D()
@@ -1795,7 +1798,7 @@ module ripperBucket3D(pickup=1,wide=ripperBucketWide,wall=ripperBucketWall)
         }
     }
             
-    // Sheet metal pickup attachment
+    // Tool pickup attachment
     if (pickup) couplerPickupFull();
 }
 //ripperBucket2D(10.0);
@@ -1868,7 +1871,8 @@ module oreBucketReinforcing(shrink=0)
 module oreBucket3D(wall=oreBucketWall) 
 {
     color([0.6,0.7,0.8])
-    translate([0,0,1])
+    translate([0,knuckleSpace+1,-50])
+    rotate([-90,0,0])
     difference() {
         union() {
             oreBucketToCoupler() oreBucket3DSolid(0.0);
@@ -1904,19 +1908,23 @@ module rockBreaker(bitonly=0) {
       couplerPickupFull();
       couplerCharge(-1.4);
       
+      /*
       // Mini ripper bucket, to load broken rocks
       rotate([0,0,90]) 
       translate([0,-couplerSize/4,couplerSize/4]) 
           rotate([90,0,0]) 
            scale([1,0.4,1]) 
                ripperBucket3D(0);
+      */
     }
-    translate([0,0,50])
+    
+    translate([0,knuckleSpace+50,-150])
+    rotate([-90,0,0])
     {
         if (!bitonly)
         // Drive box
-        translate([0,-100,2])
-            cube([100,400,100],center=true);
+        translate([0,-100,0])
+            cube([200,400,100],center=true);
         
         
         len=300; // length of chisel from pivot center
@@ -2011,17 +2019,17 @@ module arms(config,actuators=1,models=1,pins=1,wipers=1,travel=0)
     {
         if (models) boomModel(0,wipers);
         
-        //linkXformParent(config,tiltLink)
+        //linkXformParent(config,skewLink)
         {
             linkXformParent(config,stickLink)
             {
                 if (models) stickModel(wipers,actuators);
                 
-                linkXformParent(config,couplerLink)
+                linkXformParent(config,tiltLink)
                 {
                     if (models) couplerModel(wipers);
                     
-                    linkXformParent(config,wristLink)
+                    linkXformParent(config,spinLink)
                     {
                         if (models) couplerHorn();
                         // Tool origin: at face of coupler
@@ -2056,7 +2064,7 @@ module arms(config,actuators=1,models=1,pins=1,wipers=1,travel=0)
         tiltActuatorSymmetry()
         drawLinearActuator(config,
             stickLink,couplerActBegin,
-            couplerLink,[-tiltActuatorX,tiltActuator[1],tiltActuator[2]]);
+            tiltLink,[-tiltActuatorX,tiltActuator[1],tiltActuator[2]]);
     }
 }
 
@@ -2137,7 +2145,7 @@ configDeployDown=[1.0,0.05,0.65,0]; // deployment position, mounted on the wall,
 //configDigShovel=[1.0,0.5,0.75,1.0]; // dig down with ripper bucket
 configDigShovel=[0.7,0.3,0.75,1.0]; // dig down with ripper bucket
 
-configGrind=[0.7,0.4,0.5,1.0]; // mid-grind
+configGrind=[0.7,0.4,1.0,0.0]; // mid-grind
 
 configRipHoe=[1.0,0.8,0.75,1.0]; // mid-rip
 configRipShovel=[0.7,0.4,0.5,0.0]; // mid-rip
@@ -2241,13 +2249,13 @@ module toolsRow()
     translate([0,300,0]) {
         color([1,1,1]) cube([20000,20000,1],center=true);
         
-        translate([0,1300,281]) rotate([-90,0,0]) oreBucket3D();
+        translate([0,1300,281]) rotate([0,0,0]) oreBucket3D();
         
-        translate([1100,1300,170]) rotate([-135,0,0]) ripperBucket3D();
+        translate([1100,1300,270]) rotate([-45,0,0]) ripperBucket3D();
         
-        translate([1900,1100,675]) rotate([-90,0,-30]) waterTankCoupled();
+        translate([1900,1100,675]) rotate([0,0,-30]) waterTankCoupled();
         
-        translate([2400,500,100]) rotate([-180,0,-70]) rockBreaker();
+        translate([2400,500,100]) rotate([-90,0,-70]) rockBreaker();
     }
     
     // For camera alignment: cubes
@@ -2260,8 +2268,6 @@ module Excahaul_hauling() {
 }
 
 
-include <rockgrinder/rockgrinder_frame.scad>;
-
 /*
 // Ore bucket ready to receive ore:
 translate([0,1100,320]) 
@@ -2270,7 +2276,7 @@ oreBucket3D();
 */
 
 if (0)
-color([0.3,0.5,0.7]) // permafrost
+color([0.3,0.5,0.8]) // permafrost
 translate([1500,2000,0]) cube([1000,1000,800]);
 
 if (is_undef($subpart)) 
@@ -2289,7 +2295,8 @@ if (is_undef($subpart))
         configAnimate=[configDigShovel[0],
             configDigShovel[1],$t,configDigShovel[3],configDigShovel[4]];
         //robot(configAnimate,0) ripperBucket3D();
-        robot(configGrind,0) rockgrinder3D(1,1);
+        //robot(configGrind,0) rockgrinder3D(1,1);
+        //robot(configGrind,0) rockgrinder3D(1,1);
         //robot(configRipClose,0) ripperBucket3D();
         
         if (0) { // illustrates dig-haul cycle
@@ -2333,7 +2340,7 @@ if (is_undef($subpart))
     
     //translate([0,-800,10]) color([0,0,0]) cube([1200,3,3],center=true);
 
-    //toolsRow();
+    toolsRow();
     
 // Ore bucket in rock hammer & pickup position
 //translate([0,810,280]) rotate([-90,0,0]) oreBucket3D(); // upright (stack)

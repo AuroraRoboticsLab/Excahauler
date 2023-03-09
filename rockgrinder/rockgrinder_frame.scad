@@ -5,18 +5,19 @@
  
 */
 include <../AuroraSCAD/motor.scad>;
+include <../coupler_2pin/tool_coupler_interface.scad>;
 
 // Ammunition can: some sort of flares, similar to a 50cal can but taller.
 module ammocan() 
 {
     x=285;
-    y=300;
-    z=150;
+    y=150;
+    z=290;
     translate([-x/2,0,0]) cube([x,y,z]);
 }
 
 // Top-to-bottom length of rock grinding wheel
-rockgrinderWheelZ=297+6;
+rockgrinderWheelY=knuckleSpace+297+6;
 rockgrinderFaceR=58.5;
 rockgrinderWheelOD=190; // full clearance including tines
 faceR=58.5; // face plates around wheel
@@ -46,7 +47,7 @@ toothN=28; // == 4 teeth per plate
 
 // 3D geometry of the steel face plates
 module face_plates_3D() {
-    cylinder($fn=faceN,r=rockgrinderFaceR,h=rockgrinderWheelZ,center=true);
+    cylinder($fn=faceN,r=rockgrinderFaceR,h=rockgrinderWheelY,center=true);
 }
 
 // Translate from wheel origin to the tip of this tooth.
@@ -54,9 +55,9 @@ module face_plates_3D() {
 module tooth_number(toothI)
 {
     angle=toothI*tooth_stepA;
-    height=(toothI+0.5)*rockgrinderWheelZ/toothN;
+    height=(toothI+0.5)*rockgrinderWheelY/toothN;
     rotate([0,0,angle])
-        translate([tooth_tipR,0,height-rockgrinderWheelZ/2])
+        translate([tooth_tipR,0,height-rockgrinderWheelY/2])
             rotate([0,0,180])
                 children();
 }
@@ -85,14 +86,14 @@ module teeth_3D()
 
 
 Xframe=-330/2; // +- this width between frame centerlines
-Ybase=-200; // bottom of ammo boxes
-Ytop=+50; // top of support for ammo boxes
-Zwheel=400; // distance to wheel (sets length of cutting arc)
-Zcross=Zwheel-130; // crossbar support over wheel
+Zbase=-295; // bottom of ammo boxes
+Ztop=-45; // top of support for ammo boxes
+Ywheel=knuckleSpace+400; // distance to wheel (sets length of cutting arc)
+Ycross=Ywheel-130; // crossbar support over wheel
 
-Ybot=Ybase+120; // supports scoop bottom edge
-Zbot=Zwheel; 
-Ztip=Zwheel;
+Zbot=Zbase+120; // supports scoop bottom edge
+Ybot=Ywheel; 
+Ytip=Ywheel;
 
 // The bottom curve of the bucket is around the coupler pivot
 //   with bucket facing up, for easier motion planning (pure curl)
@@ -104,8 +105,8 @@ function length2D(dx,dy) = sqrt(dx*dx+dy*dy);
 // Onboard storage bottom beyond wheel centerline
 minWheelR=65; //<- == rockgrinder faceR, plus some clearance
 rockgrinderScoopR=length2D(
-    Ybase-rockgrinderPivotOrigin[1],
-    Zwheel-rockgrinderPivotOrigin[2]
+    Zbase-rockgrinderPivotOrigin[1],
+    Ywheel-rockgrinderPivotOrigin[2]
     ) + minWheelR;
 
 
@@ -122,7 +123,7 @@ module rockgrinderBucket2D(shrink=0,clear_grinder=1)
                     circle($fn=20,r=rockgrinderScoopR-shrink,$fa=5); 
                 
                 if (clear_grinder)
-                translate([Zwheel,Ybase]) circle(d=rockgrinderWheelOD-2*shrink,$fa=5); // clearance around wheel
+                translate([Ywheel,Zbase]) circle(d=rockgrinderWheelOD-2*shrink,$fa=5); // clearance around wheel
             }
             
             if (shrink==0)
@@ -130,19 +131,19 @@ module rockgrinderBucket2D(shrink=0,clear_grinder=1)
         }
         
         // Trim off top surface
-        translate([Zcross-shrink,Ybase-0.5*inch-shrink]) 
+        translate([Ycross-shrink,Zbase-0.5*inch-shrink]) 
             rotate([0,0,-20]) // keep bucket size reasonable
                 //translate([0,400])  // cutting tip only
                     square([1000,1000]);
         
         // Trim off bottom surface
-        translate([0,Ybase-0.5*inch-shrink+1000])
+        translate([0,Zbase-0.5*inch-shrink+1000])
             square([2000,2000],center=true);
 
         // Trim everything but support area
         hull() {
             circle(d=400);
-            translate([Zwheel,Ybase]) circle(d=100);
+            translate([Ywheel,Zbase]) circle(d=100);
         }
     }
 }
@@ -152,7 +153,7 @@ rockgrinderBucketPlateOverlap=1*inch;
 // Holes to mount rock grinder plates to bucket
 module rockgrinderBucketHoles2D() 
 {
-    translate([Zwheel,Ybase]) 
+    translate([Ywheel,Zbase]) 
     for (angle=[0:45:360]) rotate([0,0,angle])
         translate([(rockgrinderWheelOD+rockgrinderBucketPlateOverlap)/2,0,0])
             circle(d=5);
@@ -167,12 +168,12 @@ module rockgrinderBucketPlate2D(bolts=1, box=0)
         intersection() {
             union() {
                 rockgrinderBucket2D(clear_grinder=0);
-                translate([Zwheel,Ybase]) {
+                translate([Ywheel,Zbase]) {
                     // Fill in hole around wheel
                     circle(d=100,$fa=5); 
                 }
             }
-            translate([Zwheel,Ybase]) {
+            translate([Ywheel,Zbase]) {
                 // Trim back to just central hole around wheel
                 circle(d=rockgrinderWheelOD+2*rockgrinderBucketPlateOverlap,$fa=5);
                 // Include top portion to match bucket lip
@@ -181,7 +182,7 @@ module rockgrinderBucketPlate2D(bolts=1, box=0)
             }
         }
         rockgrinderBucketHoles2D();
-        translate([Zwheel,Ybase]) 
+        translate([Ywheel,Zbase]) 
         {
             if (bolts) bolt_centers() circle(d=screw_diameter(bolt_type));
             if (box)    square([1.5*inch,1.5*inch],center=true);
@@ -189,85 +190,67 @@ module rockgrinderBucketPlate2D(bolts=1, box=0)
     }
 }
 
-// change XY scoop sideview to ZY tool coords
-module rockgrinderXYtoZY() 
+// change XZ scoop sideview to YZ tool coords
+module rockgrinderXZtoYZ() 
 {
-    rotate([0,-90,0]) 
+    rotate([90,0,0])
+    rotate([0,90,0]) 
         children();
 }
-
-// Rock grinder onboard storage bucket (sheet metal)
-module rockgrinderStorage(shrink=0)
-{
-    rockgrinderXYtoZY() // change XY here to ZY tool coords
-    linear_extrude(height=rockgrinderWheelZ-2*shrink,center=true,convexity=4)
-        rockgrinderBucket2D(shrink);
-}
-
 
 // Placeholder for a rock grinding wheel
 module rockgrinder3D(showFrame=1,showParts=1)
 {
     OD=190; 
-    couplerPickupFull();
-
-    if (0) // big scoop sticking out
-    difference() {
-        rockgrinderStorage(0);
-        rockgrinderStorage(0.065*inch);
-    }
-    
 
     if (showParts) {
-        translate([0,Ybase-frameSteel/2,30]) ammocan();
-        //translate([0,Ybase,170]) ammocan();
+        toolPickup();
+
+        translate([0,knuckleSpace+30,Zbase-frameSteel/2]) ammocan();
         
-        translate([0,Ybase,Zwheel]) rotate([0,90,0]) {
-            cylinder($fn=7,r=faceR,h=rockgrinderWheelZ,center=true);
-            //#cylinder($fa=5,d=rockgrinderWheelOD,h=rockgrinderWheelZ,center=true);
+        translate([0,Ywheel,Zbase]) rotate([0,-90,0]) {
+            cylinder($fn=7,r=faceR,h=rockgrinderWheelY,center=true);
             face_plates_3D();
             teeth_3D();
             
             
-            translate([0,0,rockgrinderWheelZ/2]) bolt_centers() screw_3D(bolt_type);
+            translate([0,0,rockgrinderWheelY/2]) bolt_centers() screw_3D(bolt_type);
         }
-        rockgrinderXYtoZY()
+        rockgrinderXZtoYZ()
         for (side=[0,1]) scale([1,1,1-2*side])
-        translate([0,0,rockgrinderWheelZ/2])
+        translate([0,0,rockgrinderWheelY/2])
         linear_extrude(height=1)
-            rockgrinderBucketPlate2D(side,1-side);
+            rockgrinderBucketPlate2D(side,1-side);        
     }
-    
-    
     
     if (showFrame) {
         // Steel square tube frame
         shrink=0;
-        Zclose=frameSteel/2; //<- sits in front of pickup
+        Yclose=knuckleSpace+frameSteel/2; //<- sits in front of pickup
         rockGrinderFrame=[
             //[-Xframe,Ybot,Zbot], // bottom edge of scoop
-            [-Xframe,Ybase,Zwheel], // axle of wheel
-            [-Xframe,Ybase,Zclose], // coupler side bottom corner
-            [-Xframe,Ytop,Zclose], // coupler side top corner
-            //[-Xframe,Ytop,Ztip] // support the cutting edge of scoop
+            [-Xframe,Ywheel,Zbase], // axle of wheel
+            [-Xframe,Yclose,Zbase], // coupler side bottom corner
+            [-Xframe,Yclose,Ztop], // coupler side top corner
+            //[-Xframe,Ytip,Ztop] // support the cutting edge of scoop
         ];
         steelExtrude(rockGrinderFrame,1) steelCube(shrink,frameSteel);
         rockGrinderCross=[
-            [-Xframe,Ybase,Zcross],
-            [+Xframe,Ybase,Zcross]
+            [-Xframe,Ycross,Zbase],
+            [+Xframe,Ycross,Zbase]
         ];
         steelExtrude(rockGrinderCross,0) steelCube(shrink,frameSteel);
         
-        for (Y=[-75,+50]) {
+        for (Z=[Ztop-125,Ztop]) {
             rockGrinderPickup=[
-                [-Xframe,Y,Zclose],
-                [+Xframe,Y,Zclose]
+                [-Xframe,Yclose,Z],
+                [+Xframe,Yclose,Z]
             ];
             steelExtrude(rockGrinderPickup,0) steelCube(shrink,frameSteel);
         }
     }
 }
 
-//configDigRockgrinder=[0.9,0.5,1.0-$t,0.0]; // curl in (sprays robot with chips)
-configDigRockgrinder=[0.65,0.2,0.6+$t,1.0]; // reach low
+//configDigRockgrinder=[0.9,0.5,1.0-$t,1.0]; // curl in (sprays robot with chips)
+configDigRockgrinder=[0.65,0.2,0.6+$t,0.0]; // reach low
 

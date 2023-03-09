@@ -20,6 +20,15 @@ inch=25.4; // file units are mm
 include <../../AuroraSCAD/bevel.scad>;
 include <../tool_coupler_interface.scad>;
 
+// Draw the pins.  The origin is at the top pin, -y toward the bottom pin
+module toolCouplerPinsY() {
+    for (y=[0,-pinSep])
+        translate([0,y,0])
+            rotate([0,90,0])
+                cylinder(d=pinOD,h=pinSlot,center=true);
+}
+
+
 pinLen=pinSlot-2; // left-right pin length (minus a little space)
 knuckleOR=knuckleSpace-3; // total pickup thickness around pins
 knuckleTaper=10; // Z thickness of knuckle taper
@@ -67,11 +76,7 @@ module couplerBaseplateCoords()
     translate(baseplateCenter)
         children();
 }
-module couplerBaseplateCoordsInv()
-{
-    translate(-baseplateCenter)
-        children();
-}
+
 module couplerBaseplateScrewCenters()
 {
     da=360/nBaseplateScrews;
@@ -217,7 +222,7 @@ module thumbs3D(shrink=0,hollow=1) {
         symmetryX() translate([thumbCenterX,-pinSep,thumbCenterZ])
             thumbRod3D(thumbLen,shrink,hollow);
         // Round off front of tubes to match pin
-        toolCouplerPins();
+        toolCouplerPinsY();
     }
     // Crossbar holds the sides together
     difference() {
@@ -597,7 +602,7 @@ module pickupLightenHoles()
 }
 
 module pickupCuts() {
-    //toolCouplerPins();
+    //toolCouplerPinsY();
     couplerThumbHole();
     thumbSlot3D();
     couplerBaseplateScrews();
