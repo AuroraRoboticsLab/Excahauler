@@ -589,6 +589,7 @@ module eBox()
 {
     if (eBoxAsBuilt==1) { // ground test version with tupperware box
         sz=[480,360,320];
+        color(eColor) 
         translate([0,eboxAxle,sz[2]/2]) bevelcube(sz,center=true);
     }
     if (eBoxAsBuilt==0) { // full flight version with radiators and MLI parapet
@@ -2132,6 +2133,7 @@ configDeployDown=[1.0,0.05,0.65,0]; // deployment position, mounted on the wall,
 //configDigShovel=[1.0,0.5,0.75,1.0]; // dig down with ripper bucket
 configDigShovel=[0.7,0.3,0.75,1.0]; // dig down with ripper bucket
 
+configGrind=[0.7,0.4,0.5,1.0]; // mid-grind
 
 configRipHoe=[1.0,0.8,0.75,1.0]; // mid-rip
 configRipShovel=[0.7,0.4,0.5,0.0]; // mid-rip
@@ -2252,6 +2254,8 @@ module Excahaul_hauling() {
 }
 
 
+include <rockgrinder/rockgrinder_frame.scad>;
+
 /*
 // Ore bucket ready to receive ore:
 translate([0,1100,320]) 
@@ -2279,12 +2283,12 @@ if (is_undef($subpart))
         configAnimate=[configDigShovel[0],
             configDigShovel[1],$t,configDigShovel[3],configDigShovel[4]];
         //robot(configAnimate,0) ripperBucket3D();
-        robot(configRipShovel,0) ripperBucket3D();
+        robot(configGrind,0) rockgrinder3D(1,1);
         //robot(configRipClose,0) ripperBucket3D();
         
         if (0) { // illustrates dig-haul cycle
             translate([2000,0,0]) 
-                robot(configRipHoe,0) ripperBucket3D();
+                robot(configRipHoe,0) rockgrinder3D(1,1);
         
             robot(configPickupOre,1);
         
