@@ -54,22 +54,22 @@ use <camera_mount/realsense_mount/realsense_mount.scad>;
 
 
 // Frame parameters
-axleX=400; // distance from centerline to outside of frame
-digAxle=450; // Y coordinate of front axle, on the digging side
-eboxAxle=-450; // Y coordinate of back axle, by electronics box
+axleX=400-3; // distance from centerline to outside of frame
+digAxle=455; // Y coordinate of front axle, on the digging side
+eboxAxle=-455; // Y coordinate of back axle, by electronics box
 
 rockerBogie=1; // 1: 6 wheels. 0: 4 wheels.
 middleAxle=0; // Y coordinate of middle axle (6 wheels).  Might push back a bit
-rockerAxle=(middleAxle+eboxAxle)/2; // could be non-centered?
+rockerAxle=-230; // could be non-centered?
 
-axleZ=-75; // vertical height of wheel mount point
+axleZ=-75+12; // vertical height of wheel mount point
 
 crossY=-310; // Y coordinate of center of frame crossbar
 
 eBoxY=300; // thickness of electronics main box
 eBoxFrontY=-370; // radiator and electronics box starts here
 eBoxBackY=eBoxFrontY-eBoxY;
-robotBackY=crossY-frameSteel/2-wheelDia; // only bumper beyond here
+robotBackY=-575; // only bumper beyond here
 
 
 // Warm electrical box: back portion
@@ -138,24 +138,24 @@ stickActuatorX=264; // stickX-wiper-actuatorR;
 tiltActuatorX=couplerX; // -wiper-actuatorR;
 
 // This is where the boom actuator attaches to the frame
-boomFrameActuator=[boomActuatorX-actuatorR-wiper-boomSteel/2,-310,60];
+boomFrameActuator=[boomActuatorX-actuatorR-wiper-boomSteel/2,-305,55];
 
-// This is where the stick actuator pushes on the boom
-boomStickActuator=[stickActuatorX+actuatorR+wiper+boomSteel/2,-75,58];
+// This is where the stick actuator pushes on the boom, in frame coords
+boomStickActuator=[stickActuatorX+actuatorR+wiper+boomSteel/2,-55,125];
 
 // These are points in the boom's 3d model, relative to
 //   both the frame and the boom's rest configuration.
 
-// Pivot point of boom shoulder:
+// Pivot point of boom shoulder on frame:
 boomShoulder=[boomX-0.5*boomSteel,570,0];
-// Boom actuator attachment point:
-boomLat=[boomActuatorX-actuatorR-wiper-boomSteel/2,315,140];
+// Boom actuator attachment point on frame:
+boomLat=[boomActuatorX-actuatorR-wiper-boomSteel/2,335,167];
 // Truss under actuator attachment
 boomUnderLat=[boomLat[0],boomLat[1],0];
-// Pivot point to stick:
-boomElbow=[stickX+wiper+boomSteel/2,-245,82];
+// Pivot point to stick, in *frame* coords:
+boomElbow=[stickX+wiper+boomSteel/2,-225,boomLat[2]];
 // This bit straightens out before the actual elbow joint
-boomPreElbow=[boomStickActuator[0],boomStickActuator[1],boomElbow[2]+15];
+boomPreElbow=[boomStickActuator[0],boomStickActuator[1],boomElbow[2]];
 
 
 // In stick coords, origin is at boom-stick pivot,
@@ -165,21 +165,21 @@ stickXhi=couplerX+wiper+stickSteel/2;
 stickElbow=[stickXlo,0,0];
 stickCrossbar=[stickXlo,130,50];
 stickTiltActuator=[stickXlo,stickCrossbar[1]+60,stickCrossbar[2]-70];
-stickBoomActuator=[stickXhi,560,50];
-stickCouplerPivot=[stickXhi,700,0];
+stickBoomActuator=[stickXhi,575,50];
+stickCouplerPivot=[stickXhi,735,10];
 
 
 
-cameraBar=[stickCrossbar[0]-70,370,stickCrossbar[2]+stickSteel];
+cameraBar=[stickCrossbar[0]-70,365,stickCrossbar[2]+stickSteel];
 armCameraX=(6+7/8)*inch/2;
 armCameraStart=[armCameraX,cameraBar[1]-1/4*inch,cameraBar[2]];
-armCameraEnd=armCameraStart+[0,0,8*inch];
+armCameraEnd=armCameraStart+[0,0,10*inch];
 
 
 // Location of stick-to-coupler pivot point in coupler coords:
 couplerHeight=75; // from pivot to front of coupler face
 couplerThick=couplerSteel; // Z thickness of mating tool pickup
-couplerBearingHeight=45+couplerThick/2; // Y from center of frame to center of pickup
+couplerBearingHeight=60; // Y from center of frame to center of pickup
 couplerPivot=[couplerX-couplerSteel/2,-couplerBearingHeight,75]; // pivot point up to top of tool coupler
 
 // Pivot point where tilt actuator attaches to tool coupler, in coupler coords
@@ -613,9 +613,9 @@ module aboveGround() {
 module eBox() 
 {
     if (eBoxAsBuilt==1) { // ground test version with tupperware box
-        sz=[480,360,320];
+        sz=[510,340,325];
         color(eColor) 
-        translate([0,eboxAxle,sz[2]/2]) bevelcube(sz,center=true);
+        translate([0,eboxAxle+30,sz[2]/2]) bevelcube(sz,center=true);
     }
     if (eBoxAsBuilt==0) { // full flight version with radiators and MLI parapet
         // Camera rotation mechanism
@@ -871,7 +871,7 @@ plowSize=[1300,170,140];
 plowFramePivot=[0,digAxle,axleZ];
 
 module plowForkSolid(shrink) {
-    crossY=50;
+    crossY=20;
     crossZ=22;
     
     // Forward pusher prongs
@@ -1124,7 +1124,7 @@ module boomSolidSaddle(side,shrink) {
         crossDown=[0,0,-0.9*crossR];
         cross=boomLat*0.8+boomPreElbow*0.2+crossDown;
         steelExtrude([cross,flipX(cross)],0) 
-            rotate([5,0,0]) steelCube(shrink+1,boomSteel);
+            rotate([0,0,0]) steelCube(shrink+1,boomSteel);
         
         if (shrink==0) symmetryX() translate(cross) rotate([30,0,0]) boomPin();
     }
@@ -1245,8 +1245,8 @@ module boomXform(boomExtend)
 
 /********** Stick: second link, provides reach.  Holds linear actuators ******/
 
-stickBoxCenter=[0,470,140];
-stickBoxSz=[320,200,155];
+stickBoxCenter=[0,480,150];
+stickBoxSz=[355,230,170];
 
 // Secondary warm electronics box for cameras, motor controllers, etc.
 module stickBox()
