@@ -20,6 +20,7 @@ $fs=3.0; $fa=30; // coarse mode
 
 // FEM mode: simpler geometry, smaller mesh segments
 $FEM_mode=0; // 0: graphics only; 1: finite element sim
+hollow=1; // 0: solid bar (outside only); 1: hollow tubes
 
 inch=25.4; // file units = mm
 steel1=1*inch; // 1x1 steel box tubing
@@ -626,7 +627,7 @@ module eBox()
         difference() {
             eBoxSolid(0);
             
-            eBoxSolid(eBoxMLI); // interior space (not MLI)
+            if (hollow) eBoxSolid(eBoxMLI); // interior space (not MLI)
             
             //eBoxViewSlot(0.0); // space for cameras to see out
             
@@ -834,7 +835,7 @@ module scoopBox(solid=0)
     
     difference() {
         scoopFrameSolid(0);
-        if (!solid)
+        if (!solid && hollow)
             scoopFrameSolid(wall);
         // Keep frame out of interior of box
         scoopSolid();
@@ -913,7 +914,7 @@ module plowForkSolid(shrink) {
 module plowFork() {
     difference() {
         plowForkSolid(0.0);
-        plowForkSolid(frameWall);
+        if (hollow) plowForkSolid(frameWall);
         
         // Holes for pivot
         for (y=[0,plowPushForward])
@@ -929,7 +930,7 @@ module curlBox() {
         linear_extrude(convexity=4,height=plowSize[2])
         difference() {
             square([frameSteel,frameSteel],center=true);
-            square([frameSteel-frameWall,frameSteel-frameWall],center=true);
+            if (hollow) square([frameSteel-frameWall,frameSteel-frameWall],center=true);
         }
 }
 
@@ -941,7 +942,7 @@ module plowBox() {
         translate([0,plowSize[1]/2,plowSize[2]/2])
         difference() {
             cube(plowSize,center=true);
-            cube(shrinkSz,center=true); //hollow inside
+            if (hollow) cube(shrinkSz,center=true); //hollow inside
             // Trim off front
             rotate([-45,0,0]) translate([0,0,1000])
                 cube([2000,2000,2000],center=true);
@@ -1022,11 +1023,14 @@ module frameSolid(shrink) {
         steelExtrude([boomFrameActuator,
             [boomFrameActuator[0],crossY,0]
           ],0) steelCube(shrink,frameSteel);
+        
+        /*
         // Diagonal to support that leg
         steelExtrude([
             [boomFrameActuator[0],boomFrameActuator[1],boomFrameActuator[2]*0.9],
             [x,crossY+boomFrameActuator[2]*1.5,0]
           ],0) steelCube(shrink,frameSteel/2);
+        */
     }
 }
 
@@ -1055,9 +1059,10 @@ module frameHoles(shrink)
 module frameModel(femWheel=0) {
     difference() {
         frameHoles(0.0);
-        frameHoles(frameWall);
+        if (hollow) frameHoles(frameWall);
     }
-    
+
+/*
     // Stubs for FEM supports
     if (femWheel)
     symmetryX() for (axle=[eboxAxle,digAxle])
@@ -1067,6 +1072,7 @@ module frameModel(femWheel=0) {
             translate([100,0,0])
             cube([50,50,50],center=true);
         }
+*/
 }
 
 
@@ -1208,11 +1214,11 @@ module boomModel(side,wipers,kneepads=1)
     color(steelColor) {
         difference() {
             boomHoles(0.0); // outside of frame
-            boomHoles(frameWall); // inside of tubes
+            if (hollow) boomHoles(frameWall); // inside of tubes
         }
         difference() {
             boomSolidSaddle(side,0.0); // outside of frame
-            boomSolidSaddle(side,frameWall); // inside of tubes
+            if (hollow) boomSolidSaddle(side,frameWall); // inside of tubes
             boomHoles(frameWall/2); // don't touch inside of existing stuff
             
             pivotHoles(boomHoleList,0);
@@ -1348,16 +1354,22 @@ module stickHoles(shrink) {
     }
 }
 
-module stickModel(wipers,box=0) 
+// Camera mast on top of stick
+module stickCameraMount() 
+{
+    translate([0,armCameraEnd[1],armCameraEnd[2]]) color(printColor)
+        cameraMountWithShroud();
+}
+
+module stickModel(wipers,box=0,mount=1) 
 {
     color(steelColor) 
     difference() {
         stickHoles(0.0); // outside of frame
-        stickHoles(frameWall); // inside of tubes
+        if (hollow) stickHoles(frameWall); // inside of tubes
     }
     
-    translate([0,armCameraEnd[1],armCameraEnd[2]]) color(printColor)
-        cameraMountWithShroud();
+    if (mount) stickCameraMount();
     
     if (box) color(eColor) stickBox();
     
