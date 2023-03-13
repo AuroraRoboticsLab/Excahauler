@@ -7,7 +7,7 @@
    width="697.70624mm"
    height="457.20001mm"
    viewBox="0 0 2637 1728"
-   sodipodi:docname="foo.svg"
+   sodipodi:docname="sideview_axes.svg"
    inkscape:version="1.1.2 (0a00cf5339, 2022-02-04)"
    xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
    xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
@@ -113,15 +113,15 @@
      inkscape:pageopacity="0.0"
      inkscape:pagecheckerboard="0"
      showgrid="false"
-     inkscape:zoom="0.10778356"
-     inkscape:cx="1952.988"
-     inkscape:cy="2259.1571"
+     inkscape:zoom="0.11604146"
+     inkscape:cx="2287.9754"
+     inkscape:cy="2132.8584"
      inkscape:window-width="1846"
      inkscape:window-height="1016"
      inkscape:window-x="74"
      inkscape:window-y="27"
      inkscape:window-maximized="1"
-     inkscape:current-layer="g85796"
+     inkscape:current-layer="g8"
      inkscape:snap-global="false"
      inkscape:document-units="mm"
      units="mm" />
@@ -223,9 +223,9 @@
     </g>
     <g
        id="g44207"
-       transform="rotate(-76.902794,1938.9037,1682.5399)"
-       inkscape:transform-center-x="150.86788"
-       inkscape:transform-center-y="-531.19017">
+       transform="rotate(13.097206,6175.8303,-1327.6607)"
+       inkscape:transform-center-x="-531.19017"
+       inkscape:transform-center-y="-150.86789">
       <g
          id="g44197"
          transform="matrix(3.2597673,0,0,3.2597673,2021.5903,-218.60818)">
@@ -604,9 +604,9 @@
     </g>
     <g
        id="g75273"
-       transform="rotate(0.70907066,28899.678,-6522.9531)"
-       inkscape:transform-center-x="-402.22455"
-       inkscape:transform-center-y="-286.91536">
+       transform="rotate(45.709071,3107.0711,1417.672)"
+       inkscape:transform-center-x="-203.502"
+       inkscape:transform-center-y="108.89072">
       <g
          id="g75263"
          transform="matrix(3.2597673,0,0,3.2597673,2021.5903,-218.60818)">
