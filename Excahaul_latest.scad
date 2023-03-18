@@ -16,7 +16,7 @@
 $fs=3.0; $fa=30; // coarse mode
 
 
-//$subpart=0; // 0: this is the whole robot; 1: included from elsewhere.
+//$subpart=0; // 0: this is the whole robot; 1: included from elsewhere. 
 
 // FEM mode: simpler geometry, smaller mesh segments
 $FEM_mode=0; // 0: graphics only; 1: finite element sim
@@ -1426,7 +1426,7 @@ module couplerSolid(shrink=0)
     // Arm down to tilt actuator
     tiltActuatorSymmetry()
     steelExtrude([
-        tiltActuator+[0,0,-50], // guard for tool coupler (actually tapers)
+        [tiltActuator[0],tiltActuator[1],couplerPivot[2]-250+couplerSteel/2], // guard for tool coupler (actually tapers)
         tiltActuator,
         [tiltActuator[0],tiltActuator[1],couplerPivot[2]],
         [tiltActuator[0],couplerPivot[1],couplerPivot[2]]
@@ -1463,19 +1463,26 @@ use <molon.scad>;
 use <coupler_2pin/18mm_coupler/18mm_coupler.scad>;
 
 // Coupler model, with +Y facing toward attachment, +Z up
-module couplerModel(wipers)
+module couplerModel(wipers,holes=1,motor=1)
 { 
     difference() {
         couplerHoles(0.0);
-        couplerHoles(frameWall);
+        if (holes) couplerHoles(frameWall);
     }
     
     // Drive motor
-    if (1) if (!$FEM_mode) color(steelColor)
+    if (motor && !$FEM_mode) color(steelColor)
     translate(couplerMotorPosition) rotate(couplerMotorRotation)
         motor_face_subtract();
         
 }
+
+// Tilt model: this is the coupler starting at the pivot point
+module tiltModel() {
+    translate([0,-couplerPivot[1],-couplerPivot[2]])
+    couplerModel(0,0);
+}
+
 
 // Electrical charge contacts, in coupler coords
 module couplerCharge(expand=0)

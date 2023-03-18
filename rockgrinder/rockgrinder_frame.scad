@@ -1,8 +1,8 @@
 /*
  Frame and outside parts of rock grinder tool. 
  
- This file is intended to be included from the robot itself.
- 
+ This file is intended to be included from the robot itself--
+ it won't build by itself.
 */
 include <../AuroraSCAD/motor.scad>;
 include <../coupler_2pin/tool_coupler_interface.scad>;
@@ -10,9 +10,9 @@ include <../coupler_2pin/tool_coupler_interface.scad>;
 // Ammunition can: some sort of flares, similar to a 50cal can but taller.
 module ammocan() 
 {
-    x=285;
+    x=300;
     y=150;
-    z=290;
+    z=255;
     color([0.5,0.5,0.5])
     translate([-x/2,0,0]) cube([x,y,z]);
 }
@@ -87,9 +87,9 @@ module teeth_3D()
 
 
 Xframe=-330/2; // +- this width between frame centerlines
-Zbase=-295; // bottom of ammo boxes
+Zbase=-295; // axis of cutting wheel, center of bottom frame
 Ztop=-45; // top of support for ammo boxes
-Ywheel=knuckleSpace+400; // distance to wheel (sets length of cutting arc)
+Ywheel=knuckleSpace+395; // distance to wheel (sets length of cutting arc)
 Ycross=Ywheel-130; // crossbar support over wheel
 
 Zbot=Zbase+120; // supports scoop bottom edge
@@ -208,7 +208,7 @@ module rockgrinder3D(showFrame=1,showParts=1)
     color([0.5,0.5,0.5]) {
         toolPickup();
 
-        translate([0,knuckleSpace+30,Zbase-frameSteel/2]) ammocan();
+        translate([0,knuckleSpace+1.5*inch,Zbase-frameSteel/2]) ammocan();
         
         translate([0,Ywheel,Zbase]) rotate([0,-90,0]) {
             cylinder($fn=7,r=faceR,h=rockgrinderWheelY,center=true);
