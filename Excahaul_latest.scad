@@ -2169,6 +2169,9 @@ configGrind=[0.7,0.4,0.7,0.0]; // mid-grind
 configGrind0=[0.39,0.4,0.65,0.0]; // top of cut
 configGrind2=[0.55,0.25,0.4,0.0]; // bottom of cut
 
+configMaxHigh=[0.35,1.0,0.7,0.0]; // maximum vertical reach
+configMaxFar=[1.0,1.0,0.7,0.0]; // maximum vertical reach
+
 
 configRipHoe=[1.0,0.8,0.75,1.0]; // mid-rip
 configRipShovel=[0.7,0.4,0.5,0.0]; // mid-rip
@@ -2320,7 +2323,7 @@ translate([0,1050,0]) difference() {
 
 if (is_undef($subpart)) 
 {
-    whiteBackground();
+    //whiteBackground();
     
 // Outputs directly from this file: uncomment only one
     //fem();
@@ -2338,7 +2341,8 @@ if (is_undef($subpart))
         //robot(configAnimate,0) ripperBucket3D();
         
         configGrindSweep=(1.0-$t)*configGrind0+$t*configGrind2;
-        robot(configGrind0,0) rockgrinder3D(1,1);
+        //robot(configGrind0,0) rockgrinder3D(1,1);
+        robot(configMaxFar,0) rockgrinder3D(1,1);
         
         //robot(configGrind,0) rockgrinder3D(1,1);
         //robot(configRipClose,0) ripperBucket3D();

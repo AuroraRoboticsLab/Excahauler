@@ -10,7 +10,7 @@ do
 	if [ ! -e "$d" -o \( "$f" -nt "$d" -o "$src" -nt "$d" \) ]
 	then
 		echo "Converting $f to $d"
-		openscad "$f" -o "$d" || exit 1
+		openscad --enable=manifold "$f" -o "$d" || exit 1
 	fi
 done
 

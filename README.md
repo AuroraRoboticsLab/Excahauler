@@ -8,8 +8,7 @@ To build this source code, download OpenSCAD 2020 or newer, and:
     openscad Excahaul_latest.scad
 ```
 
-The subdirectories contain a variety of subassemblies which are primarily 3D printed, held onto a frame which is primarily welded steel. This is a photo from the front of the robot, showing our first rough physical prototype.
-![Photo of robot holding tool.](documentation/excahauler_front.jpg?raw=true "Front view of the robot")
+The subdirectories contain a variety of subassemblies which are primarily 3D printed, held onto a frame which is primarily welded steel. 
 
 
 ## Parts of the Robot
@@ -21,7 +20,7 @@ The overall coordinate system has +Y forward (as required by Unity for simulatio
 The base of the robot is the welded steel **frame**, which is MIG welded from 1 inch / 25mm steel box tubing like most of the robot's fabricated parts.  The front wheels bolt directly to the frame for stability, and the middle and rear wheels are on a rocker to conform to the ground. The large rear electronics box also bolts on directly, and the front fork and arm boom are bolted directly on the frame as well.
 ![Diagram of main robot frame: sparse steel tubes in a rough U shape.](documentation/render/frame.jpg?raw=true "Frame: holds the wheels and everything else.")
 
-The robot arm moves via two links.  The arm **boom** connects to the robot frame and provides front-back motion. (The boom coordinate system is rotated by 25 degrees from the longer bar, because the boom inertial measurement unit is mounted on the shorter angled bar.)
+The robot arm moves via two links.  The arm **boom** connects to the robot frame and provides front-back motion. (The boom coordinate system is aligned with the inertial measurement unit mounted on the shorter angled bar, which is rotated about 25 degrees from the longer bar.)
 ![Diagram of boom.](documentation/render/boom.jpg?raw=true "Boom")
 
 The second robot arm link is the **stick** (following the odd excavator naming convention).  The stick has an Intel RealSense D455 depth camera mounted on top, and small electronics box for motor controllers and interfacing.
@@ -41,9 +40,11 @@ A variety of excavation **tool**s could be used, but the highest productivity to
 We move excavated material around in the front scoop.  The **fork** linear actuator raises and lowers the scoop relative to the frame via this part; the **dump** linear actuator rides on the fork and pivots the scoop to unload material.
 ![Diagram of fork.](documentation/render/fork.jpg?raw=true "Fork")
 
-The front **scoop** has a volume of 50 liters, which lets it carry a payload of about 50 kg of broken-up regolith simulant chips.
+The front **scoop** has a volume of 50 liters, which lets it carry a payload of about 50 kg of broken-up regolith simulant chips.  The coordinate system is rotated by 45 degrees to match the inertial measurement unit on the pivot arm. 
 ![Diagram of scoop.](documentation/render/dump.jpg?raw=true "Scoop")
 
+This is a photo from the front of the robot, showing our first rough physical prototype.
+![Photo of robot holding tool.](documentation/excahauler_front.jpg?raw=true "Front view of the robot")
 
 Each OpenSCAD file has some comments, but we are adding comments and README to make this easier to follow.  Please contact lawlor@alaska.edu if you have questions or suggestions!
 
