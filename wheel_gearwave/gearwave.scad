@@ -5,6 +5,7 @@
 */
 include <../AuroraSCAD/motor.scad>;
 include <../AuroraSCAD/gear.scad>;
+include <../AuroraSCAD/bearing.scad>;
 $fs=0.1; $fa=2; //<- fine output
 //$fs=0.2; $fa=5; //<- coarse preview
 
@@ -38,11 +39,10 @@ module bar_3D(enlarge=0, hollow=0)
 thruboltOD=8; // 5/16" bolts
 thruboltR=barOD/2+0.25*inch; // 1/2" nuts welded to steel bar
 
+// Planet carrier runs on these bearings
+carrier_bearing = bearing_6808;
 
 // 6013 bearings support the outer wheel
-bearingOD=85; /// Overall outside diameter (mm)
-bearingID=65; /// Overall inside diameter (mm)
-bearingZ=10;  /// Overall bearing thickness
 bearing_clearance=0.1; // permanent press fit
 bearing_assembly=0.3; // slide over repeatedly fit
 
@@ -293,40 +293,53 @@ module gearwave_fixed(support=0) {
     
 }
 
+mountR=55; // center to mounting bolt distance
+mountN=8; // number of tire mounting bolts
+mountID=0.140*inch; // #10-24 mounting screw minor diameter (or pop rivets?)
+mountOD=0.190*inch; // major diameter
+// Put children at the center of each drive-to-tire mounting bolt 
+module gearwave_drive_mountcenters() {
+    for (angle=[360/mountN/2:360/mountN:360-1]) rotate([0,0,angle]) translate([mountR,0,0])
+        children();
+}
+
+
+topPlate=1.0; // thickness of top closeout plate
+
 // Output gear on top
 module gearwave_drive() 
 {
-    topZ=closeZ+wall;
-    mountID=0.190*inch; // #10-24 mounting screws
-    mountOD=mountID+2*wall;
-    mountZ=15; // mounting bolt hole dimensions
-    mountR=55; // center to mounting bolt distance
-    mountN=2; // number of mounting bolts
+    topZ=closeZ+topPlate;
+    mountZ=8; // mounting bolt hole boss thickness
+    mountH=20; // hole depth
     
     gear=gearplane_Rgear(gearplane_drive);
     difference() {
         hull() {
             translate([0,0,wiperZ])
-                cylinder(r=driveR,h=(supportZ+wall)-wiperZ);
+                cylinder(r=driveR+0.5,h=(supportZ+wall)-wiperZ);
             translate([0,0,supportZ])
                 cylinder(d=carrierOD+2*wall,h=topZ-supportZ);
             
-            for (angle=[0:360/mountN:360-1]) rotate([0,0,angle]) translate([mountR,0,topZ-mountZ])
-               cylinder(d=mountOD,h=mountZ); 
+            // Meat around tire mounting bolts
+            gearwave_drive_mountcenters() translate([0,0,topZ-mountZ])
+               cylinder(d=mountOD+wall,h=mountZ); 
         }
-            for (angle=[0:360/mountN:360-1]) rotate([0,0,angle]) translate([mountR,0,topZ-mountZ])
-               cylinder(d=mountID,h=mountZ+1); 
+        
+        // Holes for tire mounting bolts
+        gearwave_drive_mountcenters() translate([0,0,topZ-mountH])
+           cylinder(d=mountID,h=mountH); 
         
         // Carrier clearance
         translate([0,0,supportZ])
-            cylinder(d=carrierOD,h=closeZ-supportZ);
+            cylinder(d=gear_ID(gear),h=closeZ-supportZ);
         
         //Wiper clearance
         translate([0,0,wiperZ-1])
             cylinder(r=wiperR+1,h=driveZ-(wiperZ-1));
         
         // Central hole, for fixed axle and bearing
-        translate([0,0,closeZ-1]) cylinder(d=75,h=5);
+        translate([0,0,closeZ-1]) cylinder(d=0.5*inch,h=5);
             
         // Ring gear cut
         bevel=2;
@@ -459,8 +472,8 @@ module gearwave_cutaway() {
 module gearwave_printable(boxes=1,carrier=1,gear=1) {
     shift=115; // space each part this far
     if (boxes) {
-        translate([0,0,-motor_faceZ]) gearwave_fixed(support=1);
-        //translate([0,shift,closeZ+wall]) rotate([180,0,0]) gearwave_drive(); 
+        if (boxes==1) translate([0,0,-motor_faceZ]) gearwave_fixed(support=1);
+        if (boxes==2) translate([0,0,closeZ+wall]) rotate([180,0,0]) gearwave_drive(); 
     }
     if (carrier) {
         translate([shift,0,-motorZ]) gearwave_motorcarrier();
@@ -472,8 +485,167 @@ module gearwave_printable(boxes=1,carrier=1,gear=1) {
     }
 }
 
-//gearwave_illustrate();
-//gearwave_cutaway();
+/********** Mount to plastic Barbie Jeep tire ***********/
 
-gearwave_printable(1,0,0);
+jeeptire_bearingOD=22+0.2;
+jeeptire_bearingID=0.375*inch+2;
+jeeptire_bearingZ=8+0.2;
+
+// 2D cross section of jeep tire mount drive tab: 
+//   the nub molded into the tire that pushes it around.
+module jeeptire_mount_tab2D(trim=0) 
+{
+    d=15; // width of tab slots
+    circlecenter=[36.5+d/2,0,0]; // rounded inside of tabs
+    
+    hull() {
+        translate(circlecenter) circle(d=d);
+        translate([61-d/2-trim,0,0]) square([d,d],center=true);
+    }
+}
+
+// Rotate to each jeeptire_mount tab
+module jeeptire_mount_tabs() {
+    da=90; // change in angle between mounts, degrees
+    for (cross=[0:da:360-1]) rotate([0,0,cross]) children();
+}
+
+// 2D cross section of jeep tire mount
+//   Tabs: push on nubs molded into tire
+//   Ribs: connect parts together
+//   Ears: screw onto mounting bolts
+module jeeptire_mount2D(inside=0,tabs=1,ribs=0,ears=0) 
+{
+    rib=1.5;
+    drivewall=2.5;
+    d=15; // width of tab slots
+    pushR=45; // distance to secure arms
+    
+    if (!inside)
+        circle(d=jeeptire_bearingOD+2*rib);
+    jeeptire_mount_tabs()
+    {
+        // Actual drive tabs
+        if (tabs) 
+        offset(r=inside?0:drivewall)
+        jeeptire_mount_tab2D(trim=inside?0:drivewall+0.1);
+        
+        if (ribs) {
+            // Support lattice to bearing
+            for (dy=[-1,+1]) for (sy=[-1,+1])
+            if (sy>=dy)
+            hull() {
+                translate([0,dy*jeeptire_bearingOD/2]) circle(d=rib);
+                translate([pushR,sy*d/2]) circle(d=rib);
+            }
+            // Outer diagonals
+            hull() {
+                translate([pushR,d/2]) circle(d=rib);
+                rotate([0,0,90])
+                translate([pushR,-d/2]) circle(d=rib);
+            }
+        }
+        
+        // Screw ears
+        if (ears) 
+        hull() {
+            for (side=[-1,+1]) scale([1,side,1])
+                rotate([0,0,360/mountN/2]) translate([mountR,0,0])
+                    circle(d=12);
+            // connect back to tabs
+            jeeptire_mount_tab2D();
+        }
+    }
+    
+}
+
+// Hold a Barbie Jeep tire onto the gearwave gearbox
+module jeeptire_mount() {
+    h=14; // total height of part
+    floor=1.0; // plastic under tabs and everything
+    ears=h; // plastic under mounting ears
+    round=2.5;
+    difference() {
+        union() {
+            // Main blocks around bearing and tabs
+            linear_extrude(height=h,convexity=12) 
+                offset(r=-round) offset(r=+round)
+                    jeeptire_mount2D(0,1,1,1);
+            
+            linear_extrude(height=floor,convexity=6) 
+            offset(r=-round) offset(r=+round)
+            {
+                hull() jeeptire_mount2D(0,0,1); // ribs only
+                jeeptire_mount2D(0,1,0,1); // tabs stick out from there
+            }
+        }
+        
+        // Remove area around mounting bolts
+        gearwave_drive_mountcenters() {
+            cylinder(d=mountOD,h=25,center=true);
+            translate([0,0,3]) // flared area around each bolt
+                cylinder(d1=12,d2=28,h=h);
+        }
+        
+        // Remove inside of tabs
+        max_taper=2.0;
+        for (taper=[0:0.25:max_taper])
+        translate([0,0,floor+h]) scale([1,1,-1])
+            linear_extrude(height=h-max_taper+taper,convexity=8) 
+                offset(r=-taper) 
+                    jeeptire_mount_tabs()
+                        jeeptire_mount_tab2D(trim=-1-max_taper);
+        
+        // Space for bearing (with support)
+        difference() {
+            // Main bearing hole
+            cylinder(d=jeeptire_bearingOD,h=jeeptire_bearingZ);
+            // Add support material back in
+            cylinder(d=jeeptire_bearingID+1,h=jeeptire_bearingZ);
+        }
+        // axle thru hole
+        translate([0,0,-1])
+            cylinder(d=jeeptire_bearingID,h=h+2);
+        
+        // Trim back the outer rim (avoid stress concentration on tire)
+        trimOD=125;
+        difference() {
+            cylinder(d=trimOD,h=h+1);
+            cylinder(d1=trimOD,d2=trimOD-h,h=h);
+        }
+        
+    }
+}
+
+// Compare jeep tire mount to previous mount
+module jeeptire_mount_compare() {
+    translate([0,0,closeZ+3])
+    {
+        color([1,0,0])
+        jeeptire_mount();
+
+        // 2D cross section
+        if (0) color([1,0.5,0.3])
+        projection(cut=true)
+        translate([0,0,-5]) rotate([0,0,45])
+        import("tiremount_v14.stl");
+        
+        // 3D section
+        translate([0,0,14]) rotate([0,0,45]) rotate([180,0,0])
+        import("tiremount_v14.stl");
+    }
+}
+
+
+//gearwave_illustrate();
+gearwave_cutaway();
+//bearing3D(carrier_bearing);
+
+
+//gearwave_printable(1,0,0);
+//gearwave_drive();
+
+//jeeptire_mount_compare();
+//jeeptire_mount();
+
 
