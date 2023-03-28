@@ -42,29 +42,14 @@ thruboltR=barOD/2+0.25*inch; // 1/2" nuts welded to steel bar
 // Planet carrier runs on these bearings
 carrier_bearing = bearing_6808;
 
-// 6013 bearings support the outer wheel
+clearance=0.15; // general 3D printed clearance
 bearing_clearance=0.1; // permanent press fit
 bearing_assembly=0.3; // slide over repeatedly fit
-
-// Z heights of each bearing in the finished wheel (at -z face of bearing)
-bearing1Z=3; // fixed side
-bearingMZ=wheelZ-bearingZ-3; // motor side
-bearingNZ=[bearing1Z,bearingMZ];
-
 
 // module M0.8 / 32P gears (available in metal versions)
 gearZ=10; // Z height of one layer of gears (including gaps)
 gear_spaceZ=1.0; // Z height gap between layers (e.g., washers)
 
-clearance=0.15;
-
-//gear_bearingOD=22+clearance; // 608ZZ skate bearing
-//gear_bearingZ=7+clearance;
-gear_bearingOD=0.5*inch+clearance; // 5/16" needle bearing
-gear_bearingZ=5/16*inch+clearance;
-
-gear_shaftOD=8+2*clearance; // space for 5/16" bolt
-gear_bearing_ballR=4.5; // metal BB, inside gears
 
 nplanet=4;
 nteeth_planet=12; // teeth on travelling planet gears (determines spin dia)
@@ -109,8 +94,11 @@ carrierOD=1+gear_OD(gearplane_Sgear(gearplane_motor)); // hole for carrier
 carrierID=-0.5+gear_ID(gearplane_Sgear(gearplane_motor)); // carrier body size
 
 // Carrier spins on a bushing, but spaced like a 6807 bearing: 35mm x 47mm x 7mm
-carrier_bearing_OD=47.5;
-carrier_bearing_ID=47;
+//carrier_bearing_OD=47.5;
+//carrier_bearing_ID=47;
+carrier_bearing_OD = bearingOD(carrier_bearing)+bearing_clearance;
+carrier_bearing_ID = bearingID(carrier_bearing)-bearing_clearance;
+carrier_bearing_Z = bearingZ(carrier_bearing);
 
 axleOD=8; // 5/16" or 8mm tube axles
 axle_boss=12; // surrounds axle, planets ride on top
@@ -178,11 +166,11 @@ module gearwave_fixed_wiperteeth()
     translate([0,0,splitZ]) 
     intersection() {
         scale([1,1,-1])
-            cylinder(r=wiperR+0.8,h=splitZ-fixedZ);  
+            cylinder(r=wiperR+0.5,h=splitZ-fixedZ);  
         
         union() {
             for (angle=[0:10:360-1]) rotate([0,0,angle])
-                rotate([45,0,0]) cube([2*wiperR+2,8,8],center=true);
+                rotate([45,0,0]) cube([2*wiperR+1,8,8],center=true);
         }
     }
 }
@@ -279,8 +267,11 @@ module gearwave_fixed(support=0) {
                 }
             }
             // Put back the carrier bearing
-            translate([0,0,motorZ-2])
+            translate([0,0,motorZ-1]) {
                 cylinder(d=carrier_bearing_ID,h=fixedZ-motorZ);
+                // Tiny lip for bearing to ride on, lifting carrier above floor
+                cylinder(d=carrier_bearing_ID+2,h=+1.5);
+            }
         }
         
         // Space for a grease Zerk fitting, to refill bearing/bushing with grease
@@ -372,8 +363,11 @@ module gearwave_motorcarrier()
             cylinder(d=4.8,h=6);
         
         // Space for bearing / bushing
-        translate([0,0,-1])
-        cylinder(d=carrier_bearing_OD,h=fixedZ-motorZ+1);
+        translate([0,0,-0.1]) {
+            cylinder(d=carrier_bearing_OD,h=carrier_bearing_Z);
+            // thru hole
+            cylinder(d=carrier_bearing_OD-2,h=fixedZ-motorZ);
+        }
     }
 }
 
@@ -639,7 +633,6 @@ module jeeptire_mount_compare() {
 
 //gearwave_illustrate();
 gearwave_cutaway();
-//bearing3D(carrier_bearing);
 
 
 //gearwave_printable(1,0,0);
