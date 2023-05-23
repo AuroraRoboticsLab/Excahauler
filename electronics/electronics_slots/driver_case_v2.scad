@@ -8,7 +8,7 @@
  
  
 */
-dxf_name="driverrack_v2_xport.dxf";
+dxf_name="driver_case_v2_xport.dxf";
 
 // Load a DXF file layer
 module dxf(layer_name,convexity=2) {
