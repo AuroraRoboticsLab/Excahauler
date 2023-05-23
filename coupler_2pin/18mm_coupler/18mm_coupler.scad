@@ -617,19 +617,21 @@ module pickupCuts() {
 
 
 // Final finished baseplate with all the trimmings
-module pickupBaseplate() {
+module pickupBaseplate(thumbs=1) {
     difference() {
         union() {
             difference() {
                 pickupBodyHooks();
-                couplerBaseplateFlush();
+                if (thumbs) couplerBaseplateFlush();
             }
             couplerBaseplate();
             
         }
-        thumbSlot3D();
-        couplerThumbHole();
-        couplerBaseplateScrews();
+        if (thumbs) {
+            thumbSlot3D();
+            couplerThumbHole();
+            couplerBaseplateScrews();
+        }
         
         pickupRebarRods();
         pickupLightenHoles();
@@ -648,8 +650,40 @@ module pickupSlice2D() {
     }
 }
 
+// Pickup hanging off a corner (used on tool for charging)
+module pickupCornerBase() {
+    clipCorner=[0,-pinSep-6,13]; // inside corner
+    clipFront=clipCorner+[0,20,-50]; // trim off top
+    difference() {
+        pickupBaseplate(thumbs=0);
+        
+        for (clip=[clipCorner,clipFront]) translate(clip)
+            translate([-200,0,0])
+                cube([400,400,400]);
+    }
+    translate(clipCorner) {
+        bossR=6; // top radius of screw bosses
+        bevelZ=4; // height of screw supports
+        taperR=18; // attachment size
+        for (side=[-1,+1]) scale([side,1,-1])
+        translate([50,bossR+clipFront[1]-clipCorner[1],0])
+        difference() {
+            hull() {
+                // Boss
+                cylinder(d1=2*bossR+2*bevelZ,d2=2*bossR,h=bevelZ);
+                // Tapered back to frame
+                translate([0,-bossR-bevelZ,0])
+                    scale([1,0.01,1]) 
+                        cylinder(d1=2*taperR+2*bevelZ,d2=2*taperR,h=bevelZ);
+            }
+            cylinder(d=0.190*inch+0.2,h=50,center=true);
+        }
+    }
+}
+
 // Includes support material for more reliable 3D printing
 module pickupSupported(half=0) {
+    // Normal case: full coupler
     pickupBaseplate();
     symmetryX() {
         beam=6; thick=1; // self-supporting beam, to support far edge of overhangs
@@ -670,14 +704,16 @@ module pickupSupported(half=0) {
 }
 
 // Printable in two halves
-module pickupPrintableHalf(half=0,printTiltAngle=15)
+module pickupPrintableHalf(half=0,base=0,printTiltAngle=15)
 {
     intersection() {
         translate([0,0,200]) cube([400,400,400],center=true);
         
         rotate([0,half?+90:-90,0])
         rotate([0,0,printTiltAngle]) // slight tilt to make overhangs more printable
-        translate(-baseplateCenter) pickupSupported(half);
+        translate(-baseplateCenter) 
+        if (base) pickupCornerBase();
+        else pickupSupported(half);
     }
 }
 
@@ -697,14 +733,16 @@ module pickupDemo() {
 //pickupBaseplate();
 //pickupSlice2D();
 //pickupDemo();
-baseplateMetal2D();
+//baseplateMetal2D();
 
 //thumbAssembly2D();
 
 //thumbPrintable(1,1,0); // small parts for thumb
 //translate([55,0,0]) scale([1,1,1]*0.25) 
-if (0) {
-//translate([20,0,0]) pickupPrintableHalf(0); // left half
-//translate([-20,0,0]) pickupPrintableHalf(1); // right half
+if (1) {
+    //base=0; // cylinder-style base (coupler on robot)
+    base=1; // corner-style base (used on tool)
+    translate([20,0,0]) pickupPrintableHalf(0,base); // left half
+    translate([-20,0,0]) pickupPrintableHalf(1,base); // right half
 }
 
