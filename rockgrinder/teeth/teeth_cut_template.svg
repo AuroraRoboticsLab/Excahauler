@@ -1,0 +1,241 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!-- Created with Inkscape (http://www.inkscape.org/) -->
+
+<svg
+   width="210mm"
+   height="297mm"
+   viewBox="0 0 210 297"
+   version="1.1"
+   id="svg5196"
+   inkscape:version="1.1.2 (0a00cf5339, 2022-02-04)"
+   sodipodi:docname="teeth_cut_template.svg"
+   xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
+   xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
+   xmlns:xlink="http://www.w3.org/1999/xlink"
+   xmlns="http://www.w3.org/2000/svg"
+   xmlns:svg="http://www.w3.org/2000/svg">
+  <sodipodi:namedview
+     id="namedview5198"
+     pagecolor="#ffffff"
+     bordercolor="#666666"
+     borderopacity="1.0"
+     inkscape:pageshadow="2"
+     inkscape:pageopacity="0.0"
+     inkscape:pagecheckerboard="0"
+     inkscape:document-units="mm"
+     showgrid="false"
+     inkscape:snap-global="false"
+     inkscape:zoom="0.81149737"
+     inkscape:cx="386.32288"
+     inkscape:cy="434.38219"
+     inkscape:window-width="1846"
+     inkscape:window-height="1016"
+     inkscape:window-x="74"
+     inkscape:window-y="27"
+     inkscape:window-maximized="1"
+     inkscape:current-layer="layer1" />
+  <defs
+     id="defs5193" />
+  <g
+     inkscape:label="Layer 1"
+     inkscape:groupmode="layer"
+     id="layer1">
+    <path
+       style="fill:#ffffff;fill-opacity:1;fill-rule:evenodd;stroke:#000000;stroke-width:0.762;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1"
+       id="path5661"
+       sodipodi:type="arc"
+       sodipodi:cx="260.38492"
+       sodipodi:cy="187.14732"
+       sodipodi:rx="50.508469"
+       sodipodi:ry="50.496029"
+       sodipodi:start="0.57648225"
+       sodipodi:end="6.2254149"
+       sodipodi:arc-type="slice"
+       d="m 302.73047,214.6716 a 50.508469,50.496029 0 0 1 -62.84489,18.62584 50.508469,50.496029 0 0 1 -28.31989,-59.10023 50.508469,50.496029 0 0 1 53.9015,-37.28963 50.508469,50.496029 0 0 1 45.34194,47.32419 l -50.42421,2.91555 z"
+       transform="rotate(45)" />
+    <path
+       style="fill:none;fill-opacity:0.37046123;fill-rule:evenodd;stroke:#000000;stroke-width:0.198038;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:0.362571"
+       id="path5929"
+       sodipodi:type="arc"
+       sodipodi:cx="53.367657"
+       sodipodi:cy="315.71838"
+       sodipodi:rx="69.370186"
+       sodipodi:ry="69.353088"
+       sodipodi:start="0.57648225"
+       sodipodi:end="6.2254149"
+       sodipodi:arc-type="slice"
+       d="m 111.5266,353.52123 a 69.370186,69.353088 0 0 1 -86.313493,25.5814 69.370186,69.353088 0 0 1 -38.895575,-81.17041 69.370186,69.353088 0 0 1 74.030304,-51.21494 69.370186,69.353088 0 0 1 62.274284,64.99678 l -69.254463,4.00432 z" />
+    <g
+       id="g7227">
+      <path
+         id="rect5765"
+         style="fill:#ffffff;fill-opacity:0.400015;fill-rule:evenodd;stroke:#000000;stroke-width:2.88;stroke-miterlimit:4;stroke-dasharray:none"
+         d="M 161.70312 936.85547 L 161.70312 1008.0996 L 162.92578 1008.0996 A 190.89815 190.85113 45 0 1 228.28125 1008.0996 L 231.46289 1008.0996 L 188.38281 936.85547 L 161.70312 936.85547 z "
+         transform="scale(0.26458333)" />
+      <use
+         x="0"
+         y="0"
+         xlink:href="#rect5765"
+         id="use6733"
+         transform="rotate(180,55.542085,257.30159)"
+         width="100%"
+         height="100%"
+         style="stroke-width:0.996299" />
+      <use
+         x="0"
+         y="0"
+         xlink:href="#rect5765"
+         id="use6735"
+         transform="rotate(180,68.300316,257.30159)"
+         width="100%"
+         height="100%"
+         style="stroke-width:0.996299" />
+      <use
+         x="0"
+         y="0"
+         xlink:href="#rect5765"
+         id="use6737"
+         transform="translate(25.516463)"
+         width="100%"
+         height="100%"
+         style="stroke-width:0.996299" />
+      <use
+         x="0"
+         y="0"
+         xlink:href="#rect5765"
+         id="use6739"
+         transform="rotate(180,81.058548,257.30159)"
+         width="100%"
+         height="100%"
+         style="stroke-width:0.996299" />
+      <use
+         x="0"
+         y="0"
+         xlink:href="#rect5765"
+         id="use6741"
+         transform="translate(51.032926)"
+         width="100%"
+         height="100%"
+         style="stroke-width:0.996299" />
+    </g>
+    <use
+       x="0"
+       y="0"
+       xlink:href="#g7227"
+       id="use7229"
+       transform="translate(1.9392198e-4,-38.738051)"
+       width="100%"
+       height="100%" />
+    <use
+       x="0"
+       y="0"
+       xlink:href="#g7227"
+       id="use7231"
+       transform="translate(1.9392198e-4,-57.58806)"
+       width="100%"
+       height="100%" />
+    <use
+       x="0"
+       y="0"
+       xlink:href="#g7227"
+       id="use7233"
+       transform="translate(1.9392198e-4,-76.438069)"
+       width="100%"
+       height="100%" />
+    <use
+       x="0"
+       y="0"
+       xlink:href="#g7227"
+       id="use7235"
+       transform="translate(1.9392198e-4,-95.288078)"
+       width="100%"
+       height="100%" />
+    <use
+       x="0"
+       y="0"
+       xlink:href="#g7227"
+       id="use7237"
+       transform="translate(1.9392198e-4,-114.13809)"
+       width="100%"
+       height="100%" />
+    <use
+       x="0"
+       y="0"
+       xlink:href="#g7227"
+       id="use7319"
+       transform="translate(1.9392198e-4,-132.9881)"
+       width="100%"
+       height="100%" />
+    <rect
+       style="fill:#ffffff;fill-opacity:0.400015;fill-rule:evenodd;stroke:#000000;stroke-width:0.761998;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1"
+       id="rect7362"
+       width="24.638"
+       height="24.638002"
+       x="142.85248"
+       y="158.87637" />
+    <text
+       xml:space="preserve"
+       style="font-weight:bold;font-size:3.175px;line-height:1.25;font-family:Arial;-inkscape-font-specification:'Arial Bold';text-decoration:none;text-decoration-line:none;text-decoration-color:#000000;fill:#000000;fill-opacity:1;fill-rule:evenodd;stroke:none;stroke-width:0.762;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1"
+       x="150.56555"
+       y="172.31778"
+       id="text9118"><tspan
+         sodipodi:role="line"
+         id="tspan9116"
+         style="font-size:3.175px;fill:#000000;fill-opacity:1;stroke:none;stroke-width:0.762;stroke-opacity:1"
+         x="150.56555"
+         y="172.31778">1 inch</tspan></text>
+    <rect
+       style="fill:#7c7c7c;fill-opacity:1;fill-rule:evenodd;stroke:none;stroke-width:0.762;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:0.362571"
+       id="rect11600"
+       width="9.1112804"
+       height="2.8394668"
+       x="41.555588"
+       y="245.3223"
+       ry="1.4097604"
+       rx="1.4097604" />
+    <text
+       xml:space="preserve"
+       style="font-weight:bold;font-size:3.175px;line-height:1.25;font-family:Arial;-inkscape-font-specification:'Arial Bold';text-decoration:none;text-decoration-line:none;text-decoration-color:#000000;fill:#000000;fill-opacity:1;fill-rule:evenodd;stroke:none;stroke-width:0.762;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:0.362571"
+       x="45.949951"
+       y="273.47125"
+       id="text18686"><tspan
+         sodipodi:role="line"
+         id="tspan18684"
+         style="font-size:3.175px;fill:#000000;fill-opacity:1;stroke-width:0.762"
+         x="45.949951"
+         y="273.47125">Drum</tspan></text>
+    <text
+       xml:space="preserve"
+       style="font-weight:bold;font-size:3.175px;line-height:1.25;font-family:Arial;-inkscape-font-specification:'Arial Bold';text-decoration:none;text-decoration-line:none;text-decoration-color:#000000;fill:#000000;fill-opacity:1;fill-rule:evenodd;stroke:none;stroke-width:0.762;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:0.362571"
+       x="44.600288"
+       y="259.86105"
+       id="text21124"><tspan
+         sodipodi:role="line"
+         id="tspan21122"
+         style="font-size:3.175px;fill:#000000;fill-opacity:1;stroke-width:0.762"
+         x="44.600288"
+         y="259.86105">Tooth</tspan></text>
+    <text
+       xml:space="preserve"
+       style="font-weight:bold;font-size:3.175px;line-height:1.25;font-family:Arial;-inkscape-font-specification:'Arial Bold';text-decoration:none;text-decoration-line:none;text-decoration-color:#000000;fill:#000000;fill-opacity:1;fill-rule:evenodd;stroke:none;stroke-width:0.762;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:0.362571"
+       x="37.742897"
+       y="244.12267"
+       id="text21542"><tspan
+         sodipodi:role="line"
+         id="tspan21540"
+         style="font-size:3.175px;fill:#000000;fill-opacity:1;stroke-width:0.762"
+         x="37.742897"
+         y="244.12267">Hardfacing</tspan></text>
+    <text
+       xml:space="preserve"
+       style="font-weight:bold;font-size:3.175px;line-height:1.25;font-family:Arial;-inkscape-font-specification:'Arial Bold';text-decoration:none;text-decoration-line:none;text-decoration-color:#000000;fill:#000000;fill-opacity:1;fill-rule:evenodd;stroke:none;stroke-width:0.762;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:0.362571"
+       x="41.579041"
+       y="111.59064"
+       id="text36340"><tspan
+         sodipodi:role="line"
+         id="tspan36338"
+         style="stroke-width:0.762"
+         x="41.579041"
+         y="111.59064">Teeth are bandsaw cut from a 3&quot; x 1/8&quot; mild steel strip.</tspan></text>
+  </g>
+</svg>
