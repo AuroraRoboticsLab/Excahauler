@@ -125,7 +125,6 @@ motorZ=idlerZ-gearZ-gear_spaceZ;
 // 3D printed clearance around gear teeth
 gear_clearance=0.1;
 
-
 // Illustrate basic geartrain
 module geartrain_illustrate() 
 {
@@ -140,7 +139,6 @@ module geartrain_illustrate()
     gearplane_2D(gearplane_motor);
 }
 //geartrain_illustrate();
-
 
 
 motor=motortype_3674;
@@ -533,6 +531,74 @@ module drumscrewSupports(drumOD,Zshift=0) {
             cylinder($fn=4,d=1.41*drumscrewZ,h=drumscrewLen);
             translate([drumscrewZ/2+bearingZ,0,drumscrewLen/2])
                 cube([1,3*drumscrewLen,drumscrewLen],center=true);
+        }
+    }
+}
+
+// For drilling holes in drum ends
+module drum_drill_jig(extra_end=0.0) {
+    wall=1.5;
+    floor=1;
+    sz=floor+extra_end+bearingZ+drumscrewZ; // Z start of drumscrew symmetry
+    OD=drumOD+2*wall;
+    difference() {
+        union() {
+            cylinder(d=OD,h=floor+extra_end+2*wall);
+            translate([0,0,sz]) rotate([180,0,0]) 
+                drumscrewSupports(OD,-4*wall);
+        }
+        // Drill actual guide holes
+        translate([0,0,sz]) rotate([180,0,0]) 
+            drumscrewSymmetry()
+                cylinder(d=drumscrewOD,h=20,center=true);
+        
+        // Trim inside
+        translate([0,0,floor])
+            cylinder(d=drumOD+0.2,h=100);
+        
+        // Thru hole inside drum
+        cylinder(d=drumID,h=100,center=true);
+    }
+}
+
+// Holds the outside of the bearings to the inside of the face plates
+//  Z==0 is start of bearing
+//  Cylinder extends to Z=-floor
+module bearing_mount(floor=1.0,extra_wiggle=0.3) {
+    difference() {
+        round=4;
+        union() {
+            translate([0,0,-floor])
+            linear_extrude(height=floor+bearingZ-0.01)
+                if (drumCylinder) { // round drum
+                    circle(d=drumID-extra_wiggle);
+                } else { // 7-sided drum
+                    r=faceR-bearing_mount_wiggle-extra_wiggle;
+                    clip=1.5; // rounded corners (stay off welds, leave gap for dust to escape)
+                    offset(r=+round) offset(r=-round)
+                    intersection() {
+                        circle(r=r,$fn=faceN); // poly sides
+                        circle(r=r-clip); 
+                    }
+                }
+            translate([0,0,-drumscrewZ])
+            if (drumCylinder) drumscrewSupports(drumID-extra_wiggle);
+        }
+        // Pocket for bearing
+        translate([0,0,0])
+            cylinder(d=bearingOD+0.2,h=bearingZ+0.01);
+        
+        // Thru hole
+        cylinder(d=bearingOD-5,h=100,center=true);
+            
+        if (drumCylinder) {
+            translate([0,0,-drumscrewZ])
+            drumscrewSymmetry() cylinder(d=drumscrewID,h=drumscrewLen);
+        } else {
+            // M3 holes for pulling / seal mounting / etc
+            for (angle=[0:360/faceN:360-1]) rotate([0,0,angle])
+                translate([(faceR+bearingOD/2)/2-1,0,floor+3])
+                    cylinder(d=2.5,h=100);
         }
     }
 }
