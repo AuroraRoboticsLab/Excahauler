@@ -6,18 +6,32 @@
 include <../AuroraSCAD/motor.scad>;
 include <../AuroraSCAD/gear.scad>;
 include <../AuroraSCAD/bearing.scad>;
+include <../AuroraSCAD/bevel.scad>;
 $fs=0.1; $fa=2; //<- fine output
-//$fs=0.2; $fa=5; //<- coarse preview
+//$fs=0.3; $fa=10; //<- coarse preview
 
 inch=25.4; // file units are mm
 
-// Overall height of assembly
+// Overall height of wheel
 wheelZ=250;
 
 // General thickness of plastic walls:
 wall=2.5;
 
+// Diameter of main wheel axle
+mainaxle_OD=3/8*inch+0.2;
+module mainaxle_3D() {
+    cylinder(d=mainaxle_OD,h=wheelZ,center=true);
+}
+
+mainaxle_bearing=bearing_3_8; // 608 style, but 3/8" ID
+
+
 // Steel bar that supports the non-motor side
+//bar_centerlineX=0; // bar centered
+//bar_centerlineX=-3; // typical rear wheel
+bar_centerlineX=-5; // typical front wheel
+
 barZ = 160; 
 barOD=1.0*inch+0.5; // 1.0" steel bar (plus space to slide on)
 module bar_2D(shrink=0) {
@@ -40,24 +54,24 @@ thruboltOD=8; // 5/16" bolts
 thruboltR=barOD/2+0.25*inch; // 1/2" nuts welded to steel bar
 
 // Planet carrier runs on these bearings
-carrier_bearing = bearing_6808;
+carrier_bearing = mainaxle_bearing; // bearing_6808;
 
 clearance=0.15; // general 3D printed clearance
-bearing_clearance=0.1; // permanent press fit
+bearing_clearance=0.15; // permanent press fit
 bearing_assembly=0.3; // slide over repeatedly fit
 
 // module M0.8 / 32P gears (available in metal versions)
-gearZ=10; // Z height of one layer of gears (including gaps)
+gearZ=9; // Z height of one layer of gears (including gaps)
 gear_spaceZ=1.0; // Z height gap between layers (e.g., washers)
 
 
-nplanet=4;
+nplanet=3;
 nteeth_planet=12; // teeth on travelling planet gears (determines spin dia)
 
-nteeth_fixed=48; // fixed teeth on output ring gear (determines OD)
+nteeth_fixed=36; // fixed teeth on output ring gear (determines OD)
 
-nteeth_motor=13; // teeth on motor pinion gear
-nteeth_carrier=108; // teeth on planet carrier, driven by motor
+nteeth_motor=8; // teeth on motor pinion gear
+nteeth_carrier=83; // teeth on planet carrier, driven by motor
 
 
 geartype_motor=[ 0.8, gearZ, 20, 0.32, 0.4 ]; // motor shaft (purchased pinion)
@@ -68,17 +82,9 @@ geartype_fixed=[ 2.0, gearZ, output_angle, 0.25, 0.35 ]; // fixed gear plane
 gearplane_fixed=[geartype_fixed, nteeth_fixed-2*nteeth_planet,nteeth_planet, nplanet];
 
 gearplane_drive=gearplane_stepped(gearplane_fixed,-1);
-
-// Size of motor, with water jacket
-jacketedmotorOD=2.0*inch;
-
-
-// Size of main output bearing
-main_bearing_OD=85;
-main_bearing_ID=65;
-main_bearingZ=10;
-
-
+gearplane_print(gearplane_motor,"motor");
+gearplane_print(gearplane_fixed,"fixed");
+gearplane_print(gearplane_drive,"drive");
 
 // Not 100% sure this is the actual ratio, but it's close
 echo("Gear reduction: ", 
@@ -100,6 +106,7 @@ carrier_bearing_OD = bearingOD(carrier_bearing)+bearing_clearance;
 carrier_bearing_ID = bearingID(carrier_bearing)-bearing_clearance;
 carrier_bearing_Z = bearingZ(carrier_bearing);
 
+// axles that spin the planets
 axleOD=8; // 5/16" or 8mm tube axles
 axle_boss=12; // surrounds axle, planets ride on top
 axle_support=2; // meat under each axle
@@ -117,20 +124,24 @@ wiperR=gear_OR(gearplane_Rgear(gearplane_fixed))+wall;
 fixedZ=gearZ; // Z height of fixed gear teeth
 motorZ=0; // Z height of top face where motor spur emerges, bottom support carrier
 
-encoderR=(carrierOD+carrier_bearing_OD)/2/2; // centerline radius of encoders
+encoderR=carrierOD/2 - 8; // centerline radius of encoders
 encoder_ht=4.0;
 encoderZ=motorZ-1.5-encoder_ht; // bottom of encoder board channel
 encoder_wid=0.35*inch; // size of encoder board
 encoder_len=50;
-encoder_angle=30; // angle away from motor
+encoder_angle=35; // angle away from motor
 
 // CAM: cut axle shafts this long
 echo("Axle length: ",closeZ-fixedZ-2*axle_support);
 
 
-motor=motortype_3674; // hefty Turnigy motor style
+//motor=motortype_3674; // hefty Turnigy brushless motor style
+motor=motortype_550; // brushed
 //motor=motortype_750;
 motor_faceZ=motorZ-10; // Face of motor 
+//motor_bolt_angle=30; // for Turnigy brushless
+motor_bolt_angle=90; // for brushed
+
 
 // Centerline radius of motor
 motor_mountR=gearplane_Oradius(gearplane_motor); // must be at least barOD/2 + jacketedmotorOD/2
@@ -145,18 +156,28 @@ module motor_space()
     // M3 motor mounting bolts 
     translate([motor_mountR,0,motor_faceZ]) {
         bolt_floor=5; //< Z plastic under motor bolt heads (for M3x8 socket caps)
-        spur_height=20; // height of spur gear on motor shaft (plus a little clearance)
-        spur_OD=15;
+        spur_height=21; // height of spur gear on motor shaft (plus a little clearance)
+        spur_OD=11; // diameter of spur gear
         
-        motor_3D(motor,clearance=0.5);
+        motor_3D(motor,clearance=0.3,vent_ht=8);
+        if (motor==motortype_550)
+        {
+            // vents face backwards
+            translate([-15,0,0])
+                cube([12,14,16],center=true);
+        }    
+        
         //motor_electrical(motor);
         translate([0,0,bolt_floor]) difference() {
-            rotate([0,0,30]) motor_bolts(motor,web=0.0,extra_head=25);
+            rotate([0,0,motor_bolt_angle]) motor_bolts(motor,web=0.0,extra_head=12);
             // don't cut middle bolts, they hit the fixed ring gear
-            cube([12,100,100],center=true);
+            if (motor==motortype_3674)
+                cube([12,100,100],center=true);
         }
         cylinder(d=spur_OD,h=spur_height); // clearance for the spur gear
-        translate([10,0,bolt_floor+4]) cube([25,8,8],center=true); // channel for tightening sprocket set screw
+        
+        if (motor==motortype_3674)
+            translate([10,0,bolt_floor+4]) cube([25,8,8],center=true); // channel for tightening sprocket set screw
     }
 }
 
@@ -204,6 +225,30 @@ module gearwave_fixed_support()
     }
 }
 
+// Cut for central axle hole, and space for carrier to spin
+module gearwave_carrier_space()
+{
+    h=1;
+    cylinder(d=mainaxle_OD,h=100,center=true);
+    translate([0,0,-h])
+    difference() {
+        cylinder(
+            d1=carrierOD-wall, d2=carrierOD,
+            h=h+0.01);
+        // Ridge to keep main bearing up
+        cylinder(d1=mainaxle_OD+2*wall,d2=mainaxle_OD+wall,
+            h=h+0.02);
+    }
+    
+    // cube([100,100,100]); // debug cutaway
+}
+
+motorblock_dx=18;  // width of block that fixes motor
+motorblock_dy=motor_diameter(motor);
+motorblock_dz=fixedZ-motor_faceZ;
+motorblock_corner=[motor_mountR-motorblock_dx/2,-motorblock_dy/2,0];
+motorblock_sz=[motorblock_dx,motorblock_dy,motorblock_dz];
+
 // Bottom, fixed part of gearwave
 module gearwave_fixed(support=0) {
     difference() {
@@ -214,9 +259,17 @@ module gearwave_fixed(support=0) {
                 // Surround motor and bar
                 translate([0,0,motor_faceZ]) {
                     // Extra meat to keep printed slopes reasonable
-                    cylinder(d=carrierOD+2*wall-(motorZ-motor_faceZ),h=motorZ-motor_faceZ-1);
+                    if (motor==motortype_3674) {
+                        cylinder(d=carrierOD+2*wall-(motorZ-motor_faceZ),h=motorZ-motor_faceZ-1);
+                        translate([motor_mountR,0,0]) cylinder(d=motor_diameter(motor),h=fixedZ-motor_faceZ-2);
+                    } else { // RS-550
+                        dx=18;
+                        dy=motor_diameter(motor);
+                        dz=fixedZ-motor_faceZ;
+                        translate(motorblock_corner)
+                            bevelcube(motorblock_sz,bevel=2);
+                    }
                     
-                    translate([motor_mountR,0,0]) cylinder(d=motor_diameter(motor),h=fixedZ-motor_faceZ-2);
                     linear_extrude(height=fixedZ-motor_faceZ) offset(r=2*wall) bar_2D();
                     //cylinder(d=0.7*gear_OD(gearplane_Rgear(gearplane_fixed)),h=1);
                 }
@@ -227,8 +280,10 @@ module gearwave_fixed(support=0) {
                 }
                 
                 // Surround fixed ring gear
-                translate([0,0,fixedZ-wall]) {
-                    cylinder(r=wiperR,h=wiperZ-1-(fixedZ-wall));     
+                //translate([0,0,fixedZ-wall]) {
+                //    cylinder(r=wiperR,h=wiperZ-1-(fixedZ-wall));     
+                translate([0,0,motor_faceZ]) {
+                    cylinder(r=wiperR,h=wiperZ-1-motor_faceZ);     
                 }
             }
             // Wiper ring
@@ -244,12 +299,16 @@ module gearwave_fixed(support=0) {
         // Space for the encoder
         gearwave_fixed_encoderspace();
         
-        // Space for the thru bar
-        bar_3D();
+        // Space for the thru axle and carrier spin
+        translate([0,0,motorZ]) gearwave_carrier_space();
         
         // Space for a steel cross bar (also reduces 3D printed volume)
-        translate([0,0,motorZ-wall-barOD/2])
+        translate([bar_centerlineX,0,motorZ-wall-barOD/2])
             rotate([90,0,0]) bar_3D();
+        
+        // Dust vent
+        translate([0,0,(motorZ+fixedZ)/2])
+            rotate([90,0,0]) cylinder($fn=6,d=2.5,h=200,center=true);
         
         // Central hole clearance:
         difference() {
@@ -263,28 +322,16 @@ module gearwave_fixed(support=0) {
                 
                 // Channel for the carrier
                 translate([0,0,motorZ]) {
-                    cylinder(d=carrierOD+2*wall,h=0.2+fixedZ-motorZ);   
+                    bevelcylinder(d=carrierOD+1.5*wall,h=0.2+fixedZ-motorZ,bevel=2);   
                 }
             }
-            // Put back the carrier bearing
-            translate([0,0,motorZ-1]) {
-                cylinder(d=carrier_bearing_ID,h=fixedZ-motorZ);
-                // Tiny lip for bearing to ride on, lifting carrier above floor
-                cylinder(d=carrier_bearing_ID+2,h=+1.5);
-            }
-        }
-        
-        // Space for a grease Zerk fitting, to refill bearing/bushing with grease
-        translate([-carrier_bearing_OD/2+1,0,motor_faceZ-0.1])
-        {
-            cylinder(d1=10.3,d2=8.6,h=8); // 1/8" NPT zerk
-            cylinder(d=4,h=12); // grease channel
         }
     }
     
 }
 
-mountR=55; // center to mounting bolt distance
+// Parameters for bolts mounting the tire to the gearbox
+mountR=45; // center to mounting bolt distance
 mountN=8; // number of tire mounting bolts
 mountID=0.140*inch; // #10-24 mounting screw minor diameter (or pop rivets?)
 mountOD=0.190*inch; // major diameter
@@ -295,7 +342,7 @@ module gearwave_drive_mountcenters() {
 }
 
 
-topPlate=1.0; // thickness of top closeout plate
+topPlate=2.0; // thickness of top closeout plate
 
 // Output gear on top
 module gearwave_drive() 
@@ -323,20 +370,31 @@ module gearwave_drive()
         
         // Carrier clearance
         translate([0,0,supportZ])
-            cylinder(d=gear_ID(gear),h=closeZ-supportZ);
+            bevelcylinder(d=gear_ID(gear),h=closeZ-supportZ,bevel=1);
         
         //Wiper clearance
         translate([0,0,wiperZ-1])
             cylinder(r=wiperR+1,h=driveZ-(wiperZ-1));
         
-        // Central hole, for fixed axle and bearing
-        translate([0,0,closeZ-1]) cylinder(d=0.5*inch,h=5);
+        // Central hole and space for top carrier
+        translate([0,0,closeZ]) scale([1,1,-1])
+            gearwave_carrier_space();
             
         // Ring gear cut
         bevel=2;
         translate([0,0,driveZ-bevel]) {
             gear_3D(gear,clearance=ring_clearance,bevel=bevel,height=splitZ-fixedZ+1+2*bevel);
         }
+    }
+}
+
+// Space to add a carrier bearing, plus a rim on top
+module carrier_bearing_slot() {
+    // Space for bearing / bushing
+    translate([0,0,-0.1]) {
+        cylinder(d=carrier_bearing_OD,h=carrier_bearing_Z);
+        // thru hole
+        cylinder(d=carrier_bearing_OD-2,h=fixedZ-motorZ);
     }
 }
 
@@ -357,17 +415,12 @@ module gearwave_motorcarrier()
             gearplane_planets(gearplane_fixed) cylinder(d=axleOD,h=splitZ-motorZ);
 
         // Hole for encoder magnets
-        magnetN=4;
+        magnetN=nplanet;
         da=360/magnetN;
         for (angle=[da/2:da:360-1]) rotate([0,0,angle]) translate([encoderR,0,motorZ-0.1])
             cylinder(d=4.8,h=6);
         
-        // Space for bearing / bushing
-        translate([0,0,-0.1]) {
-            cylinder(d=carrier_bearing_OD,h=carrier_bearing_Z);
-            // thru hole
-            cylinder(d=carrier_bearing_OD-2,h=fixedZ-motorZ);
-        }
+        carrier_bearing_slot();
     }
 }
 
@@ -378,8 +431,13 @@ module gearwave_supportcarrier()
     translate([0,0,supportZ])
     difference() {
         union() {
-            translate([0,0,1])
-                cylinder(d=carrierID,h=closeZ-supportZ-1);
+            translate([0,0,1]) {
+                linear_extrude(height=closeZ-supportZ-1)
+                    hull()
+                    gearplane_planets(gearplane_fixed) 
+                        circle(d=axle_boss);
+                //cylinder(d=carrierID,h=closeZ-supportZ-1);
+            }
             // boss supports each planet gear
             gearplane_planets(gearplane_fixed) cylinder(d=axle_boss,h=closeZ-supportZ);
         }
@@ -389,8 +447,8 @@ module gearwave_supportcarrier()
             gearplane_planets(gearplane_fixed) cylinder(d=axleOD,h=closeZ-supportZ-axle_support);
 
         // Space for bearing / bushing
-        translate([0,0,-1])
-        cylinder(d=carrier_bearing_OD,h=fixedZ-motorZ+2);
+        translate([0,0,closeZ-supportZ])
+            scale([1,1,-1]) carrier_bearing_slot();
     }
 }
 
@@ -417,6 +475,7 @@ module gearwave_illustrate()
 {
     translate([0,0,-50]) bar_3D();
     #motor_space();
+    #gearwave_fixed_encoderspace();
     
     color([0.3,0.4,0.8]) translate([0,0,motorZ])
     {
@@ -441,22 +500,23 @@ module gearwave_illustrate()
 
 }
 
-module gearwave_main_bearing() {    
-    translate([0,0,closeZ]) difference() {
-        cylinder(d=main_bearing_OD,h=main_bearingZ);
-        cylinder(d=main_bearing_ID,h=3*main_bearingZ,center=true);
-    }
-}
-
 // Entire assembly, with cutaway view
-module gearwave_cutaway() {
+module gearwave_cutaway(onlygears=0) {
     difference() {
         union() {
-            gearwave_fixed();
             gearwave_motorcarrier();
             gearwave_planets();
-            gearwave_drive();
-            gearwave_supportcarrier();
+            if (!onlygears) {
+                gearwave_fixed();
+                gearwave_drive();
+                gearwave_supportcarrier();
+            } else {
+                // only show ring gears
+                translate([0,0,fixedZ])
+                    gearplane_ring_2D(gearplane_fixed);
+                translate([0,0,driveZ])
+                    gearplane_ring_2D(gearplane_drive);
+            }
         }
         //translate([0,0,driveZ+gearZ/2+100])  cube([200,200,200],center=true);
         translate([0,0,motor_faceZ]) cube([200,200,200]);
@@ -464,14 +524,14 @@ module gearwave_cutaway() {
 }
 
 module gearwave_printable(boxes=1,carrier=1,gear=1) {
-    shift=115; // space each part this far
+    shift=95; // space each part this far
     if (boxes) {
         if (boxes==1) translate([0,0,-motor_faceZ]) gearwave_fixed(support=1);
         if (boxes==2) translate([0,0,closeZ+wall]) rotate([180,0,0]) gearwave_drive(); 
     }
     if (carrier) {
-        translate([shift,0,-motorZ]) gearwave_motorcarrier();
-        translate([shift,shift,closeZ]) rotate([180,0,0]) gearwave_supportcarrier();
+        if (carrier==1) translate([shift,0,-motorZ]) gearwave_motorcarrier();
+        if (carrier==2) translate([shift,shift,closeZ]) rotate([180,0,0]) gearwave_supportcarrier();
     }
     if (gear) {
         //translate([-shift,shift/2,supportZ]) rotate([180,0,0]) gearwave_planets(0); // plain shaft
@@ -513,7 +573,7 @@ module jeeptire_mount2D(inside=0,tabs=1,ribs=0,ears=0)
     rib=1.5;
     drivewall=2.5;
     d=15; // width of tab slots
-    pushR=45; // distance to secure arms
+    pushR=40; // distance to secure arms
     
     if (!inside)
         circle(d=jeeptire_bearingOD+2*rib);
@@ -547,7 +607,7 @@ module jeeptire_mount2D(inside=0,tabs=1,ribs=0,ears=0)
                 rotate([0,0,360/mountN/2]) translate([mountR,0,0])
                     circle(d=12);
             // connect back to tabs
-            jeeptire_mount_tab2D();
+            jeeptire_mount_tab2D(trim=8);
         }
     }
     
@@ -578,7 +638,7 @@ module jeeptire_mount() {
         gearwave_drive_mountcenters() {
             cylinder(d=mountOD,h=25,center=true);
             translate([0,0,3]) // flared area around each bolt
-                cylinder(d1=12,d2=28,h=h);
+                cylinder(d1=12,d2=24,h=h);
         }
         
         // Remove inside of tabs
@@ -632,13 +692,21 @@ module jeeptire_mount_compare() {
 
 
 //gearwave_illustrate();
-gearwave_cutaway();
+//gearwave_cutaway();
 
 
-//gearwave_printable(1,0,0);
+//gearwave_printable(1,0,0); // fixed frame
+//gearwave_printable(2,0,0); // drive frame
+//gearwave_printable(0,1,0); // motor-side carrier
+//gearwave_printable(0,2,0); // support-side carrier
+//gearwave_printable(0,0,1); // planets
+
+// Outside to inside:
+translate([0,0,closeZ+2]) jeeptire_mount();
 //gearwave_drive();
-
-//jeeptire_mount_compare();
-//jeeptire_mount();
+//gearwave_supportcarrier();
+//gearwave_planets();
+//gearwave_motorcarrier();
+//gearwave_fixed();
 
 
