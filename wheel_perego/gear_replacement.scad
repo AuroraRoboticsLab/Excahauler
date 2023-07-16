@@ -4,6 +4,32 @@
  Dr. Orion Lawlor, lawlor@alaska.edu, 2023-06-30 (Public Domain)
 */
 include <geartype_perego.scad>;
+use <../AuroraSCAD/PolyGear/PolyGear.scad>;
+
+module gear3D_via_PolyGear(gear,height,clearance=0)
+{
+    gt=gear_geartype(gear);
+    m=geartype_Dpitch(gt);
+    translate([0,0,height/2]) //<- centered for some reason
+    spur_gear(
+        n=gear_nteeth(gear),
+        m=m,
+        z=height,
+        pressure_angle=geartype_pressure(gt),
+        backlash=clearance / m,
+        /* Translate addendum / dedendum:
+            Polygear: 
+                add_dist = m*(1 + add);
+                add_dist / m - 1 = add
+                
+                ded_dist = m*(1.167)*(1 + ded);
+                ded_dist/(m*1.167) - 1 = ded;
+        */
+        add=geartype_add(gt)/m - 1,
+        ded=geartype_sub(gt)/(m*1.167) - 1, 
+        type=gear_ring(gear)?-1:+1,
+        $fn=10);
+}
 
 inch=25.4; // file units are mm
 
@@ -28,8 +54,9 @@ module hole_ring(gearLow,gearHigh)
     gapR=(gapI+gapO)/2;
     lightenOD=(gapO-gapI);
     if (lightenOD>3) {
-        count=round(gapR*2*PI/(lightenOD+2.0));
-        for (a=[0:360/count:360-1]) rotate([0,0,a])
+        count=round(gapR*2*PI/(lightenOD+2.0)/2)*2;
+        da=360/count;
+        for (a=[da/2:da:360-1]) rotate([0,0,a])
             translate([gapR,0,-0.1])
             {
                 r=(lightenOD/2-gear_clearance);
@@ -40,14 +67,16 @@ module hole_ring(gearLow,gearHigh)
 
 module solid_gear() 
 {
-    bevel=3; //<- avoid stress riser at hi root
+    bevel=4; //<- avoid stress riser at hi root
     bevelR=gear_OR(hi_gear)+2.5;
     
     difference() {
+        gear3D_via_PolyGear(lo_gear,loZ,2*gear_clearance);
+        
         // low gear teeth
         linear_extrude(height=loZ,convexity=8) 
         difference() {
-            gear_2D(lo_gear);
+            //offset(r=-gear_clearance) gear_2D(lo_gear);
             // holes reduce curl
             offset(r=-1) hole_ring(lo_gear,hi_gear);
         }
@@ -59,14 +88,27 @@ module solid_gear()
     }
     
     // hi gear teeth
-    linear_extrude(height=loZ+hiZ,convexity=8) 
-    difference() {
-        gear_2D(hi_gear);
+    if (1) {
+        gear3D_via_PolyGear(hi_gear,loZ+hiZ,2*gear_clearance);
+    }
+    else 
+    { // old 2D gear
+        linear_extrude(height=loZ+hiZ,convexity=8) 
+        difference() {
+            offset(r=-gear_clearance) gear_2D(hi_gear);
+        }
     }
     
     // Bevel connecting lower and upper gears
     translate([0,0,loZ-bevel-0.01])
         cylinder(r1=bevelR,r2=gear_IR(hi_gear),h=bevel);
+    
+    // Bars connecting lower and upper gears, for torque
+    barsink=1;
+    bar=2*bevel-2*barsink;
+    translate([0,0,loZ-barsink-bar/2])
+        for (angle=[0,90]) rotate([0,0,angle])
+            rotate([0,90,0]) cylinder(d=bar,h=gear_ID(lo_gear)-1,center=true);
 }
 
 module axled_gear() {
@@ -80,7 +122,7 @@ module axled_gear() {
         // Thru hole for shaft, to stop bushings moving
         cylinder(d=axleOD-1,h=100,center=true);
         
-        if (0) {
+        if (1) {
             // Tiny holes for reinforcing wire (to transmit torque, prevent part from cracking along layer lines)
             rebarN=3;
             rebarOD=0.050*inch+0.1;
