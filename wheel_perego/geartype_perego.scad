@@ -14,8 +14,8 @@ ded=0.4;
 
 // Geartypes for each gear layer
 geartype0 = [ 0.8, 9.0, pressureAngle, add, ded ]; // motor
-geartype1 = [ 1.235, 10.5+1.2, pressureAngle, add, ded ]; // fastest gear output
-geartype2 = [ 1.76, 12+1.7, pressureAngle, add, ded ]; // intermediate gear
+geartype1 = [ 1.25 /* .235 */, 10.5+1.2, pressureAngle, add, ded ]; // fastest gear output
+geartype2 = [ 1.78, 12+1.7, pressureAngle, add, ded ]; // intermediate gear
 geartype3 = [ 2.23, 16, pressureAngle, add, ded ]; // output gear
 
 
