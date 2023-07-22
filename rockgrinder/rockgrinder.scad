@@ -3,8 +3,8 @@
 */
 include <../AuroraSCAD/motor.scad>;
 include <../AuroraSCAD/gear.scad>;
-//$fs=0.1; $fa=2; //<- fine output
-$fs=0.2; $fa=5; //<- coarse preview
+$fs=0.1; $fa=2; //<- fine output
+//$fs=0.2; $fa=5; //<- coarse preview
 
 inch=25.4; // file units are mm
 
@@ -163,7 +163,7 @@ module bolt_centers(step=1) {
 // Round drum profile
 drumID=97.4-2*gear_clearance;
 drumOD=101.5+2*gear_clearance;
-drumCylinder=0; // 1: cylinder.  0: plates
+drumCylinder=1; // 1: cylinder.  0: plates
 
 
 // Number of face segments (welded plates)
@@ -219,13 +219,18 @@ module gear_axle_cut(gear)
     cylinder(d=gear_shaftOD,h=100,center=true);
 }
 
+// Bearings / bushings for gears
+gear_axleOD = 5/16*inch+0.3; // Plain bushings on 5/16" shaft
+
+// gear_axleOD = 10-0.1; // 10mm OD press-in bushings (drill for clean hole)
+
+
 // Cut a bearing into this gear if there's room.
 //   Any support material can be added as a child node.
 module gear_bearing_cut(gear) {
     
-    // Space for 10mm OD press-in bushings (drill for clean hole)
-    cylinder(d=10-0.2,h=50,center=true);
-
+    cylinder(d=gear_axleOD,h=50,center=true);
+    
     if (0)
     if (gear_ID(gear)>2+gear_bearingOD)
     difference() {
@@ -275,13 +280,14 @@ module gear_lighten_holes(gearLow,gearHigh=0,scale=1)
 
 // Draw a stepped gear between these two gear sizes, with this much space between them.
 //   Puts in structural parts to hold gear in place.
-module stepped_gear(gearLow,space,gearHigh,bevelLow=1,support=1)
+module stepped_gear(gearLow,space,gearHigh,bevelLow=1,support=1,holes=1,loZoverride=0)
 {
+    loZ = loZoverride>0 ? loZoverride : gear_height(gearLow);
     overlap=1;
     difference() {
         union() {
-            gear_3D(gearLow,bevel=bevelLow,clearance=gear_clearance);
-            translate([0,0,gear_height(gearLow)-overlap-0.01])
+            gear_3D(gearLow,height=loZ,bevel=bevelLow,clearance=gear_clearance);
+            translate([0,0,loZ-overlap-0.01])
             {
                 // taper up to the high gear:
                 taperLow=min(gear_OD(gearHigh)+1,gear_ID(gearLow));
@@ -296,7 +302,7 @@ module stepped_gear(gearLow,space,gearHigh,bevelLow=1,support=1)
         gear_axle_cut(gearLow);
         
         // Consider cutting in lightening holes
-        gear_lighten_holes(gearLow,gearHigh);
+        if (holes) gear_lighten_holes(gearLow,gearHigh);
         
         // Consider cutting in low bearing:
         gear_bearing_cut(gearLow)
@@ -342,12 +348,25 @@ module through_pins()
 }
 
 module idler_sun(bevelLow,support) {
+    sun_extra=2; // extra long base to stop sun riding up and shearing
+    motor_gearOD=gear_OD(gearplane_Sgear(gearplane_motor))+1; // space around motor gear
+    
     translate([0,0,idlerZ])
-    through_pins() 
-        stepped_gear(gearplane_Sgear(gearplane_idler),
-            gear_spaceZ,
-            gearplane_Sgear(gearplane_drive),
-            bevelLow,support);
+    difference() {
+        through_pins() 
+            stepped_gear(gearplane_Sgear(gearplane_idler),
+                gear_spaceZ,
+                gearplane_Sgear(gearplane_drive),
+                bevelLow = bevelLow,support = support,
+                holes=0,loZoverride = gearZ+sun_extra);
+        
+        // Leave space for motor drive gear below sun
+        difference() {
+            cylinder(d2=motor_gearOD, d1=motor_gearOD+sun_extra, h=sun_extra);
+            // Support bottom of bushing
+            cylinder(d=1+gear_axleOD,h=100);
+        }
+    }
 }
 module printable_idler_sun(bevelLow,support=1) {
     translate(gear_print_sun+[0,0,-idlerZ]) idler_sun(bevelLow,support);
@@ -1119,7 +1138,7 @@ if (0) difference() {
 //translate([1.1*bearingOD,0,0]) end_mount_flip(bearingMZ) end_mount_top();
 
 //intersection() { printable_gears(); translate([1000,0,0]) cube([2000,2000,2000],center=true); }
-//printable_idler_sun(1,1);
+printable_idler_sun(1,1);
 //printable_motor_planets();
 //printable_drive_planets();
 //printable_gear_holder(gearplane_Pgear(gearplane_drive));
@@ -1130,7 +1149,7 @@ if (0) difference() {
 
 /// FIXME: add "eyebrow" to block debris from falling on top of drum ends
 //drum_drill_jig(3.0); // for drilling mounting holes in drum
-translate([0,0,bearingZ]) rotate([180,0,0]) bearing_encoder_mount(); // idler end with encoder magnets
+//translate([0,0,bearingZ]) rotate([180,0,0]) bearing_encoder_mount(); // idler end with encoder magnets
 //translate([0,0,-barOD/2]) encoder_mount(); // holds encoder to central steel bar
 
 
