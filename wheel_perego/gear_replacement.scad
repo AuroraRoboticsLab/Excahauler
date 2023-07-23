@@ -4,32 +4,7 @@
  Dr. Orion Lawlor, lawlor@alaska.edu, 2023-06-30 (Public Domain)
 */
 include <geartype_perego.scad>;
-use <../AuroraSCAD/PolyGear/PolyGear.scad>;
-
-module gear3D_via_PolyGear(gear,height,clearance=0)
-{
-    gt=gear_geartype(gear);
-    m=geartype_Dpitch(gt);
-    translate([0,0,height/2]) //<- centered for some reason
-    spur_gear(
-        n=gear_nteeth(gear),
-        m=m,
-        z=height,
-        pressure_angle=geartype_pressure(gt),
-        backlash=clearance / m,
-        /* Translate addendum / dedendum:
-            Polygear: 
-                add_dist = m*(1 + add);
-                add_dist / m - 1 = add
-                
-                ded_dist = m*(1.167)*(1 + ded);
-                ded_dist/(m*1.167) - 1 = ded;
-        */
-        add=geartype_add(gt)/m - 1,
-        ded=geartype_sub(gt)/(m*1.167) - 1, 
-        type=gear_ring(gear)?-1:+1,
-        $fn=10);
-}
+use <../AuroraSCAD/gear_poly.scad>;
 
 inch=25.4; // file units are mm
 
@@ -185,6 +160,8 @@ module twopart_hi() {
 }
 
 axled_gear();
+
+//#cylinder(d=12/cos(30),$fn=6,h=loZ+hiZ+1); // on a 12mm hex shaft
 
 //twopart_lo();
 //translate([43,0,-cutZ]) rotate([0,0,30]) twopart_hi();
