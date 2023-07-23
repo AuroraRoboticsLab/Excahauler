@@ -3,6 +3,7 @@
 */
 include <../AuroraSCAD/motor.scad>;
 include <../AuroraSCAD/gear.scad>;
+include <../AuroraSCAD/gear_poly.scad>;
 $fs=0.1; $fa=2; //<- fine output
 //$fs=0.2; $fa=5; //<- coarse preview
 
@@ -86,15 +87,15 @@ gear_bearing_ballR=4.5; // metal BB, inside gears
 
 geartype_motor=[ 0.8, gearZ, 20, 0.32, 0.4 ]; // motor shaft
 geartype_idler=[ 1.6, gearZ, 20, 0.32, 0.4 ]; // idler plane
-geartype_drive=[ 1.6, gearZ, 20, 0.32, 0.4 ]; // final drive plane
+geartype_drive=[ 1.6*1.5*27.2/27.6, gearZ, 20, 0.32, 0.4 ]; // final drive plane
 
 //shrinkT=0;
 shrinkT=4; //<- teeth to remove from planets and add to the sun, leaving planet axis in place (to fit smaller drum, cuts gear reduction from 43 to 31 though)
 gearplane_motor=[geartype_motor, 13+shrinkT,55-shrinkT, 2];
 
-// 44:1 reduction => 250 rpm (AS-BUILT spring 2022)
+// About 44:1 reduction
 gearplane_idler=[geartype_idler, 22,12, 2];
-gearplane_drive=[geartype_drive, 12,22, 2];
+gearplane_drive=[geartype_drive, 9, 14, 2];
 
 //gearplane_idler=[geartype_idler, 24,10, 2]; 
 
@@ -278,15 +279,15 @@ module gear_lighten_holes(gearLow,gearHigh=0,scale=1)
     }        
 }
 
-// Draw a stepped gear between these two gear sizes, with this much space between them.
+// Draw a  gear between these two gear sizes, with this much space between them.
 //   Puts in structural parts to hold gear in place.
-module stepped_gear(gearLow,space,gearHigh,bevelLow=1,support=1,holes=1,loZoverride=0)
+module stepped_gear(gearLow,space,gearHigh,bevelLow=1,support=1,holes=1,loZoverride=0,clearance=gear_clearance)
 {
     loZ = loZoverride>0 ? loZoverride : gear_height(gearLow);
     overlap=1;
     difference() {
         union() {
-            gear_3D(gearLow,height=loZ,bevel=bevelLow,clearance=gear_clearance);
+            gear3D_via_PolyGear(gearLow,height=loZ,bevel=20*bevelLow,clearance=clearance);
             translate([0,0,loZ-overlap-0.01])
             {
                 // taper up to the high gear:
@@ -295,7 +296,7 @@ module stepped_gear(gearLow,space,gearHigh,bevelLow=1,support=1,holes=1,loZoverr
                 cylinder(d1=taperLow,d2=gear_ID(gearHigh),
                     h=space);
                 
-                gear_3D(gearHigh,height=overlap+space+gear_height(gearHigh),clearance=gear_clearance);
+                gear3D_via_PolyGear(gearHigh,height=overlap+space+gear_height(gearHigh),clearance=clearance);
             }
         }
         
@@ -310,6 +311,7 @@ module stepped_gear(gearLow,space,gearHigh,bevelLow=1,support=1,holes=1,loZoverr
             if (support) cylinder(d=gear_shaftOD+1.5,h=gear_bearingZ-0.3);
         
         // Consider cutting in high bearing:
+        if (0)
         if (gear_ID(gearHigh)>3+gear_bearingOD) {
             translate([0,0,gear_height(gearLow)+space+gear_height(gearHigh)-gear_bearingZ+0.01])
                 cylinder(d=gear_bearingOD,h=gear_bearingZ);
@@ -322,7 +324,7 @@ gear_print_motor=[0,0,0];
 gear_print_sun=[30,+50,0];
 gear_print_drive=[0,-50,0];
 
-module motor_planets(bevelLow) {
+module motor_planets(bevelLow=0) {
     gearplane_planets(gearplane_motor)
         translate([0,0,motorZ])
             stepped_gear(gearplane_Pgear(gearplane_motor),
@@ -347,7 +349,7 @@ module through_pins()
     }
 }
 
-module idler_sun(bevelLow,support) {
+module idler_sun(bevelLow=0,support=0) {
     sun_extra=2; // extra long base to stop sun riding up and shearing
     motor_gearOD=gear_OD(gearplane_Sgear(gearplane_motor))+1; // space around motor gear
     
@@ -358,13 +360,16 @@ module idler_sun(bevelLow,support) {
                 gear_spaceZ,
                 gearplane_Sgear(gearplane_drive),
                 bevelLow = bevelLow,support = support,
-                holes=0,loZoverride = gearZ+sun_extra);
+                holes=0,loZoverride = gearZ+sun_extra,
+                clearance=0 /* put any clearance on planets */
+        );
         
         // Leave space for motor drive gear below sun
+        space=sun_extra+0.5; //< nylon tends to sag down
         difference() {
-            cylinder(d2=motor_gearOD, d1=motor_gearOD+sun_extra, h=sun_extra);
+            cylinder(d2=motor_gearOD, d1=motor_gearOD+space, h=space);
             // Support bottom of bushing
-            cylinder(d=1+gear_axleOD,h=100);
+            cylinder(d=2+gear_axleOD,h=100);
         }
     }
 }
@@ -383,6 +388,15 @@ module drive_planets(bevelLow) {
             gear_lighten_holes(gear,scale=0.7);
         }
 }
+
+module illustrate_gears() {
+    translate([0,0,-driveZ]) {
+        drive_planets();
+        idler_sun();
+    }
+    bearing_mount_ring_gear();
+}
+
 module printable_drive_planets(bevelLow) {
     //rotate([180,0,0])
     translate(gear_print_drive+[0,0,-driveZ]) 
@@ -1137,6 +1151,7 @@ if (0) difference() {
 //motor_waterjacket();
 //translate([1.1*bearingOD,0,0]) end_mount_flip(bearingMZ) end_mount_top();
 
+//illustrate_gears();
 //intersection() { printable_gears(); translate([1000,0,0]) cube([2000,2000,2000],center=true); }
 printable_idler_sun(1,1);
 //printable_motor_planets();
@@ -1149,7 +1164,7 @@ printable_idler_sun(1,1);
 
 /// FIXME: add "eyebrow" to block debris from falling on top of drum ends
 //drum_drill_jig(3.0); // for drilling mounting holes in drum
-//translate([0,0,bearingZ]) rotate([180,0,0]) bearing_encoder_mount(); // idler end with encoder magnets
+//translate([0,0,bearingZ]) rotate([180,0,0]) beaing_encoder_mount(); // idler end with encoder magnets
 //translate([0,0,-barOD/2]) encoder_mount(); // holds encoder to central steel bar
 
 
