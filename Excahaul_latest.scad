@@ -10,6 +10,7 @@
  boom linear: 500mm/20" travel (625-1125 overall)
  stick linear: 300mm/12" travel
  tilt linear: 300mm/12" travel (425-725 overall)
+ 
 */
 
 // $fs=0.5; $fa=5; // fine mode
@@ -2202,7 +2203,7 @@ module robot(config,plowUp=1,cameraArm=0,radiatorOpen=0.75) {
         wheelAxles();
         
         // Plow motion study
-        if (0)
+        if (1)
         for (plowFork=[0,1]) // :1.0:1.0])
             for (plowDump=[0.0:0.25:1.0])
                 plowScoop(plowFork,plowDump);
