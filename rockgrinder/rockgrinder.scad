@@ -79,8 +79,10 @@ clearance=0.15;
 
 //gear_bearingOD=22+clearance; // 608ZZ skate bearing
 //gear_bearingZ=7+clearance;
-gear_bearingOD=0.5*inch+clearance; // 5/16" needle bearing
-gear_bearingZ=5/16*inch+clearance;
+//gear_bearingOD=0.5*inch+clearance; // 5/16" needle bearing
+//gear_bearingZ=5/16*inch+clearance;
+gear_bearingOD=10.0+0.1; // 8x10x10 bushings
+gear_bearingZ=10;
 
 gear_shaftOD=8+2*clearance; // space for 5/16" bolt
 gear_bearing_ballR=4.5; // metal BB, inside gears
@@ -378,14 +380,20 @@ module printable_idler_sun(bevelLow,support=1) {
 }
 
 module drive_planets(bevelLow) {
+    extraZ=1;
+    z=gearZ+extraZ;
+    gear=gearplane_Pgear(gearplane_drive);
     gearplane_planets(gearplane_drive)
         translate([0,0,driveZ])
         difference() {
-            gear=gearplane_Pgear(gearplane_drive);
-            gear_3D(gear,bevel=bevelLow,clearance=gear_clearance);
+            gear3D_via_PolyGear(gear,height=z,bevel=20*bevelLow,clearance=gear_clearance);
             gear_axle_cut(gear);
             gear_bearing_cut(gear);
-            gear_lighten_holes(gear,scale=0.7);
+            gear_lighten_holes(gear,scale=0.75);
+            
+            // Clearance for washer above
+            d=1+gear_OD(gearplane_Pgear(gearplane_idler));
+            translate([0,0,gearZ]) cylinder(d1=d,d2=d+2*extraZ,h=extraZ+0.01);
         }
 }
 
@@ -397,7 +405,7 @@ module illustrate_gears() {
     bearing_mount_ring_gear();
 }
 
-module printable_drive_planets(bevelLow) {
+module printable_drive_planets(bevelLow=1) {
     //rotate([180,0,0])
     translate(gear_print_drive+[0,0,-driveZ]) 
         drive_planets(bevelLow);
@@ -1152,8 +1160,8 @@ if (0) difference() {
 //translate([1.1*bearingOD,0,0]) end_mount_flip(bearingMZ) end_mount_top();
 
 //illustrate_gears();
-//intersection() { printable_gears(); translate([1000,0,0]) cube([2000,2000,2000],center=true); }
-printable_idler_sun(1,1);
+//intersection() { printable_drive_planets(); translate([1000,0,0]) cube([2000,2000,2000],center=true); }
+//printable_idler_sun(1,1);
 //printable_motor_planets();
 //printable_drive_planets();
 //printable_gear_holder(gearplane_Pgear(gearplane_drive));
@@ -1164,14 +1172,14 @@ printable_idler_sun(1,1);
 
 /// FIXME: add "eyebrow" to block debris from falling on top of drum ends
 //drum_drill_jig(3.0); // for drilling mounting holes in drum
-//translate([0,0,bearingZ]) rotate([180,0,0]) beaing_encoder_mount(); // idler end with encoder magnets
+//translate([0,0,bearingZ]) rotate([180,0,0]) bearing_encoder_mount(); // idler end with encoder magnets
 //translate([0,0,-barOD/2]) encoder_mount(); // holds encoder to central steel bar
 
 
 //rotate([180,0,0]) bearing_mount(); // outside idle end
 //end_mount_flip() end_mount_bottom(); // insides idle end
 //end_mount_flip() end_mount_top(); // inside drive end
-//rotate([180,0,0]) bearing_mount_ring_gear(); // drive end with ring gear
+rotate([180,0,0]) bearing_mount_ring_gear(); // drive end with ring gear
 
 
 //face_plate_jig();
