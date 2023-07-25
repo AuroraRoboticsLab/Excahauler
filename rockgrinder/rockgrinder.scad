@@ -62,7 +62,7 @@ module drumscrewSymmetry() {
 }
 
 bearing_clearance=0.1; // permanent press fit
-bearing_assembly=0.3; // slide over repeatedly fit
+bearing_assembly=0.2; // slide over repeatedly fit
 
 // Z heights of each bearing in the finished wheel (at -z face of bearing)
 bearing1Z=3; // fixed side
@@ -833,7 +833,7 @@ module end_mount_top() {
     difference() {
         union() {
             translate([0,0,bearingMZ]) 
-                bearing_inside_support(extra_plate=10); //<- dust shield
+                bearing_inside_support(extra_plate=7); //<- dust shield
             
             intersection() {
                 cylinder(d=bearingID-bearing_assembly,h=1000); //<- everything needs to fit through bearing
@@ -853,27 +853,27 @@ module end_mount_top() {
         }
         bolts_motorside(0,25);
         
+        /*
         // Threaded holes, for pulling the end plate
         threadR=bearingID/2-10;
         for (x=[-1,+1]) translate([x*threadR,0,bearingMZ+5]) 
             cylinder(d=1/4*inch,h=25);
+        */
         
-        /*
         // Lightening holes (just to save plastic)
         round=3;
-        translate([0,0,bearingMZ-0.1]) linear_extrude(height=bearingZ)
+        #translate([0,0,bearingMZ+3]) linear_extrude(height=25)
         offset(r=+round) offset(r=-round)
         difference() {
             circle(d=bearingID-2*wall);
             bolt_centers() circle(d=8+2*bevel);
-            circle(d=15);
-            for (a=[45:90:360-1]) rotate([0,0,a]) square([bearingID,wall],center=true);
+            circle(d=22);
+            for (a=[45,90+45]) rotate([0,0,a]) square([bearingID,2*wall],center=true);
         }
-        */
         
         // Center idler axle bolt
         cylinder(d=gear_shaftOD,h=1000);
-        translate([0,0,bearingMZ+bearingZ-6]) cylinder($fn=6,d=1/2*inch/cos(30)+0.2,h=20);
+        translate([0,0,bearingMZ+bearingZ+3]) cylinder($fn=6,d=1/2*inch/cos(30)+0.2,h=20);
     }
 }
 
@@ -1178,8 +1178,8 @@ if (0) difference() {
 
 //rotate([180,0,0]) bearing_mount(); // outside idle end
 //end_mount_flip() end_mount_bottom(); // insides idle end
-//end_mount_flip() end_mount_top(); // inside drive end
-rotate([180,0,0]) bearing_mount_ring_gear(); // drive end with ring gear
+end_mount_flip() translate([0,0,-driveZ])  end_mount_top(); // inside drive end
+//rotate([180,0,0]) bearing_mount_ring_gear(); // drive end with ring gear
 
 
 //face_plate_jig();
