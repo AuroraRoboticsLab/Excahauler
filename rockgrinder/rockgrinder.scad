@@ -223,9 +223,8 @@ module gear_axle_cut(gear)
 }
 
 // Bearings / bushings for gears
-gear_axleOD = 5/16*inch+0.3; // Plain bushings on 5/16" shaft
-
-// gear_axleOD = 10-0.1; // 10mm OD press-in bushings (drill for clean hole)
+//gear_axleOD = 5/16*inch+0.3; // Plastic riding directly on 5/16" shaft
+gear_axleOD = 10-0.1; // 10mm OD press-in bushings (drill for clean hole)
 
 
 // Cut a bearing into this gear if there's room.
@@ -380,7 +379,7 @@ module printable_idler_sun(bevelLow,support=1) {
 }
 
 module drive_planets(bevelLow) {
-    extraZ=1;
+    extraZ=1.7;
     z=gearZ+extraZ;
     gear=gearplane_Pgear(gearplane_drive);
     gearplane_planets(gearplane_drive)
@@ -862,13 +861,14 @@ module end_mount_top() {
         
         // Lightening holes (just to save plastic)
         round=3;
-        #translate([0,0,bearingMZ+3]) linear_extrude(height=25)
+        translate([0,0,bearingMZ+3]) linear_extrude(height=25,convexity=8)
         offset(r=+round) offset(r=-round)
         difference() {
             circle(d=bearingID-2*wall);
-            bolt_centers() circle(d=8+2*bevel);
+            bolt_centers() circle(d=8+5*wall); // +2*bevel);
             circle(d=22);
-            for (a=[45,90+45]) rotate([0,0,a]) square([bearingID,2*wall],center=true);
+            // Diagonal supports
+            for (a=[45,90+45]) rotate([0,0,a]) square([bearingID,3*wall],center=true);
         }
         
         // Center idler axle bolt
@@ -1160,7 +1160,7 @@ if (0) difference() {
 //translate([1.1*bearingOD,0,0]) end_mount_flip(bearingMZ) end_mount_top();
 
 //illustrate_gears();
-//intersection() { printable_drive_planets(); translate([1000,0,0]) cube([2000,2000,2000],center=true); }
+intersection() { printable_drive_planets(); translate([1000,0,0]) cube([2000,2000,2000],center=true); }
 //printable_idler_sun(1,1);
 //printable_motor_planets();
 //printable_drive_planets();
@@ -1178,7 +1178,7 @@ if (0) difference() {
 
 //rotate([180,0,0]) bearing_mount(); // outside idle end
 //end_mount_flip() end_mount_bottom(); // insides idle end
-end_mount_flip() translate([0,0,-driveZ])  end_mount_top(); // inside drive end
+//end_mount_flip() translate([0,0,-driveZ])  end_mount_top(); // inside drive end
 //rotate([180,0,0]) bearing_mount_ring_gear(); // drive end with ring gear
 
 
