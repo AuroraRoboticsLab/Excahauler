@@ -378,7 +378,7 @@ module printable_idler_sun(bevelLow,support=1) {
     translate(gear_print_sun+[0,0,-idlerZ]) idler_sun(bevelLow,support);
 }
 
-module drive_planets(bevelLow) {
+module drive_planets(bevelLow=0) {
     extraZ=1.7;
     z=gearZ+extraZ;
     gear=gearplane_Pgear(gearplane_drive);
@@ -399,9 +399,14 @@ module drive_planets(bevelLow) {
 module illustrate_gears() {
     translate([0,0,-driveZ]) {
         drive_planets();
-        idler_sun();
+        motor_planets();
+        #translate([0,0,-1]) idler_sun();
     }
     bearing_mount_ring_gear();
+    
+    translate([0,0,motor_faceZ-driveZ]) {
+        motor_3D(motor,clearance=0.5);
+    }
 }
 
 module printable_drive_planets(bevelLow=1) {
@@ -1159,8 +1164,8 @@ if (0) difference() {
 //motor_waterjacket();
 //translate([1.1*bearingOD,0,0]) end_mount_flip(bearingMZ) end_mount_top();
 
-//illustrate_gears();
-intersection() { printable_drive_planets(); translate([1000,0,0]) cube([2000,2000,2000],center=true); }
+illustrate_gears();
+//intersection() { printable_drive_planets(); translate([1000,0,0]) cube([2000,2000,2000],center=true); }
 //printable_idler_sun(1,1);
 //printable_motor_planets();
 //printable_drive_planets();
